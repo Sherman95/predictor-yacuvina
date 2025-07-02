@@ -1,0 +1,433 @@
+/* --- Estilo Principal con Fondo de Pantalla --- */
+body {
+  /* La imagen de fondo se carga desde la carpeta 'public' */
+  background-image: linear-gradient(rgba(26, 26, 46, 0.85), rgba(26, 26, 46, 0.85)), url('/yacuvinaWallpaper.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* El fondo no se mueve al hacer scroll */
+  
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+}
+
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  color: #e94560;
+  margin-bottom: 0;
+}
+    
+.actualizado {
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  font-style: italic;
+}
+
+/* --- Sección de Información Detallada --- */
+.info-detallada {
+  margin-bottom: 40px;
+}
+
+.info-detallada h2 {
+  text-align: center;
+  font-size: 2rem;
+  color: #ffc107;
+  margin-bottom: 30px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.info-card {
+  background-color: rgba(15, 52, 96, 0.4);
+  backdrop-filter: blur(5px);
+  padding: 20px;
+  border-radius: 15px;
+  border-left: 3px solid #e94560;
+}
+
+.info-card h3 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
+.info-card p, .info-card li {
+  line-height: 1.6;
+  color: #c0c0c0;
+}
+
+.info-card ul {
+  padding-left: 20px;
+}
+
+.info-fuente {
+  font-size: 0.75rem;
+  font-style: italic;
+  text-align: center;
+  color: #a0a0a0;
+  margin-top: 20px;
+}
+
+
+/* --- Banner de "Mejor Día" --- */
+.mejor-dia-banner {
+  background: linear-gradient(90deg, rgba(22, 33, 62, 0.7), rgba(15, 52, 96, 0.7));
+  border: 1px solid #ffc107;
+  border-radius: 15px;
+  text-align: center;
+  padding: 20px;
+  margin-bottom: 40px;
+  backdrop-filter: blur(5px);
+}
+
+.mejor-dia-banner h3 {
+  margin: 0 0 10px 0;
+  color: #ffc107;
+  font-size: 1.5rem;
+}
+
+/* --- Grid para las tarjetas de pronóstico --- */
+.pronostico-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background-color: rgba(22, 33, 62, 0.7);
+  backdrop-filter: blur(5px);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid #0f3460;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+.card h2 { margin-top: 0; font-size: 1.5rem; color: #ffffff; }
+.card .fecha { font-style: italic; color: #c0c0c0; text-transform: capitalize; }
+.weather-icon { width: 100px; height: 100px; margin: 0 auto; }
+.card .prediccion-texto { font-size: 2rem; font-weight: bold; margin: 10px 0; }
+.card .detalles { display: flex; justify-content: space-around; font-size: 1.1rem; margin: 10px 0; }
+.card .clima-desc { font-size: 0.9rem; color: #a0a0a0; }
+.card .confianza { margin-top: 15px; font-size: 0.9rem; background-color: rgba(0, 0, 0, 0.3); padding: 5px 10px; border-radius: 20px; display: inline-block; }
+
+.card-excelente { border-top: 5px solid #28a745; }
+.card-bueno { border-top: 5px solid #ffc107; }
+.card-regular { border-top: 5px solid #fd7e14; }
+.card-malo { border-top: 5px solid #dc3545; }
+.prediccion-texto {
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.card-excelente .prediccion-texto { background-image: linear-gradient(45deg, #28a745, #20c997); }
+.card-bueno .prediccion-texto { background-image: linear-gradient(45deg, #ffc107, #ff9800); }
+.card-regular .prediccion-texto { background-image: linear-gradient(45deg, #fd7e14, #f44336); }
+.card-malo .prediccion-texto { background-image: linear-gradient(45deg, #dc3545, #6c757d); }
+
+/* --- Sección de Actividades --- */
+.actividades-container {
+  margin-top: 60px;
+  background-color: rgba(15, 52, 96, 0.4);
+  backdrop-filter: blur(5px);
+  padding: 25px 30px;
+  border-radius: 15px;
+}
+
+.actividades-container h2 {
+  text-align: center;
+  color: #e94560;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.actividades-container ul {
+  list-style: none;
+  padding: 0;
+}
+
+.actividades-container li {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  line-height: 1.6;
+}
+
+.actividades-container li:last-child {
+  border-bottom: none;
+}
+
+.actividades-container strong {
+  color: #ffc107;
+}
+
+/* --- Sección de Galería --- */
+.galeria-container {
+  margin-top: 60px;
+  text-align: center;
+}
+
+.galeria-container h2 {
+  font-size: 2rem;
+  color: #e94560;
+  margin-bottom: 30px;
+}
+
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.galeria-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.galeria-img:hover {
+  transform: scale(1.05);
+  opacity: 0.8;
+}
+
+/* --- Secciones de Video y Vista 360 --- */
+.video-container, .vista-360-container {
+  margin-top: 60px;
+  text-align: center;
+}
+
+.video-container h2, .vista-360-container h2 {
+  font-size: 2rem;
+  color: #ffc107;
+  margin-bottom: 30px;
+}
+
+.video-responsive, .mapa-responsive {
+  overflow: hidden;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  position: relative;
+  height: 0;
+  border-radius: 15px;
+}
+
+.video-responsive iframe, .mapa-responsive iframe {
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+}
+
+/* --- Footer --- */
+.footer {
+  margin-top: 60px;
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid #0f3460;
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.footer .creditos h4 {
+  color: #ffc107;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+}
+
+.footer .creditos p {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.footer .desarrollador {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* --- Estilos para Carga y Error --- */
+.loading, .error {
+  text-align: center;
+  font-size: 1.5rem;
+  padding: 50px;
+}
+
+/* --- Estilos para Visor de Imágenes --- */
+.visor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.visor-imagen {
+  max-width: 90%;
+  max-height: 80%;
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+  animation: zoomIn 0.3s ease;
+}
+
+.visor-cerrar {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  font-size: 3rem;
+  color: white;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.visor-cerrar:hover {
+  transform: scale(1.2);
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes zoomIn { from { transform: scale(0.8); } to { transform: scale(1); } }
+
+
+/*
+==============================================
+--- DISEÑO RESPONSIVO PARA MÓVILES ---
+==============================================
+*/
+@media (max-width: 768px) {
+  body {
+    padding: 10px; /* Menos espacio en los bordes */
+  }
+
+  header h1 {
+    font-size: 1.8rem; /* Título más pequeño */
+  }
+
+  .info-grid,
+  .pronostico-grid,
+  .galeria-grid {
+    /* Hacemos que las rejillas sean de una sola columna */
+    grid-template-columns: 1fr;
+  }
+
+  .card .detalles {
+    flex-direction: column; /* Apila la temperatura y el atardecer */
+    gap: 5px;
+  }
+  
+  /* --- ESTILOS MEJORADOS PARA LAS TARJETAS DE PRONÓSTICO EN MÓVIL --- */
+  .card {
+    padding: 10px;
+  }
+  .card h2 {
+    font-size: 1.2rem;
+  }
+  .card .fecha {
+    font-size: 0.8rem;
+  }
+  .card .weather-icon {
+    width: 60px;
+    height: 60px;
+  }
+  .card .prediccion-texto {
+    font-size: 1.6rem;
+    margin: 5px 0;
+  }
+  .card .detalles {
+    font-size: 0.9rem;
+  }
+  .card .clima-desc {
+    font-size: 0.8rem;
+  }
+  .card .confianza {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+  }
+
+  /* --- NUEVOS ESTILOS PARA LAS TARJETAS DE INFO EN MÓVIL --- */
+  .info-detallada h2 {
+    font-size: 1.5rem; /* Título de la sección más pequeño */
+  }
+  .info-card {
+    padding: 15px; /* Menos padding */
+  }
+  .info-card h3 {
+    font-size: 1.1rem; /* Título de la tarjeta más pequeño */
+  }
+  .info-card p, .info-card li {
+    font-size: 0.9rem; /* Texto más pequeño */
+  }
+  /* --- FIN DE NUEVOS ESTILOS --- */
+
+
+  .actividades-container,
+  .info-detallada,
+  .video-container,
+  .galeria-container,
+  .vista-360-container {
+    margin-top: 40px; /* Reduce el espacio entre secciones */
+    padding: 15px;
+  }
+
+  .footer .creditos p {
+    /* En pantallas pequeñas, cada crédito va en su propia línea */
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+/* ... (todos los estilos anteriores) ... */
+
+/* --- ESTILO PARA LA RAZÓN DEL PRONÓSTICO --- */
+.card .razon-texto {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #ffc107; /* Amarillo para llamar la atención */
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-top: -8px; /* Lo acerca un poco a la predicción */
+  margin-bottom: 10px;
+}
+
+/* Ajustes para móvil */
+@media (max-width: 768px) {
+  /* ... (todos los estilos de móvil anteriores) ... */
+  .card .razon-texto {
+    font-size: 0.75rem;
+  }
+}
