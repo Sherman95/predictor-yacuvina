@@ -9,7 +9,9 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
-const PORT = 3001;
+// --- CORRECCIÓN PARA RENDER ---
+// Usamos el puerto que nos da el entorno, o 3001 si estamos en local.
+const PORT = process.env.PORT || 3001;
 app.use(cors());
 
 // --- CONFIGURACIÓN DEL CACHÉ PERSISTENTE ---
@@ -56,7 +58,7 @@ const cargarCache = () => {
     }
 };
 
-// --- LÓGICA DE PUNTUACIÓN RECALIBRADA ---
+// --- LÓGICA DE PUNTUACIÓN PRINCIPAL ---
 const calcularPronosticoDia = (datosDelDia, fecha) => {
     if (!datosDelDia) return null;
 
@@ -101,38 +103,22 @@ const calcularPronosticoDia = (datosDelDia, fecha) => {
     if (nubesFuentes.length === 1) confianza = 65;
 
     let puntajeFinal = 100;
-    const penalizacionNubes = nubesPromedio * 0.5;
-    const penalizacionLluvia = lluviaPromedio * 0.25;
-    const penalizacionHumedad = humedadPromedio * 0.1;
-    const penalizacionViento = vientoPromedio * 0.3;
-    const penalizacionVisibilidad = (datosDelDia.weatherApi && datosDelDia.weatherApi.visibilidad < 8) ? 25 : 0;
+    puntajeFinal -= (nubesPromedio * 0.6);
+    puntajeFinal -= (lluviaPromedio * 0.2);
+    puntajeFinal -= (humedadPromedio * 0.1);
+    puntajeFinal -= (vientoPromedio * 0.5);
 
-    puntajeFinal -= (penalizacionNubes + penalizacionLluvia + penalizacionHumedad + penalizacionViento + penalizacionVisibilidad);
-
-    if (nubesPromedio > 20 && nubesPromedio < 50) {
-        puntajeFinal += 10;
+    if (datosDelDia.weatherApi && datosDelDia.weatherApi.visibilidad < 8) {
+        puntajeFinal -= 20;
     }
-    
+
     puntajeFinal = Math.max(0, Math.min(100, puntajeFinal));
 
     let prediccionTexto;
-    if (puntajeFinal >= 85) { prediccionTexto = "Excelente ✨"; }
-    else if (puntajeFinal >= 72) { prediccionTexto = "Bueno 🌤️"; }
-    else if (puntajeFinal >= 58) { prediccionTexto = "Regular ☁️"; }
+    if (puntajeFinal >= 82) { prediccionTexto = "Excelente ✨"; }
+    else if (puntajeFinal >= 70) { prediccionTexto = "Bueno 🌤️"; }
+    else if (puntajeFinal >= 55) { prediccionTexto = "Regular ☁️"; }
     else { prediccionTexto = "Malo 😞"; }
-
-    // --- NUEVA LÓGICA PARA DETERMINAR LA RAZÓN ---
-    let razonPrincipal = null;
-    if (puntajeFinal < 72) { // Solo para pronósticos no excelentes
-        const penalizaciones = {
-            "Alta nubosidad": penalizacionNubes,
-            "Riesgo de lluvia": penalizacionLluvia,
-            "Posible neblina": penalizacionVisibilidad,
-            "Viento fuerte": penalizacionViento > 10 ? penalizacionViento : 0
-        };
-        // Buscamos el factor con la mayor penalización
-        razonPrincipal = Object.keys(penalizaciones).reduce((a, b) => penalizaciones[a] > penalizaciones[b] ? a : b);
-    }
 
     let tendenciaCielo = "estable";
     if (datosDelDia.openWeather) {
@@ -151,7 +137,6 @@ const calcularPronosticoDia = (datosDelDia, fecha) => {
         diaSemana: fecha.toLocaleDateString('es-EC', { weekday: 'long', timeZone: 'America/Guayaquil' }),
         fecha: fecha.toLocaleDateString('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }),
         prediccion: prediccionTexto + (tendenciaCielo !== 'estable' ? ` (${tendenciaCielo})` : ''),
-        razon: razonPrincipal, // <-- NUEVO CAMPO
         confianza: Math.round(confianza),
         temperatura: Math.round(tempPromedio),
         icono: icono,
@@ -255,7 +240,7 @@ app.get('/api/prediccion', async (req, res) => {
 
         const top10 = [...resultadoFinal].slice(0, 10);
         cache = top10;
-        cacheTimestamp = Date.now(); // <-- ERROR CORREGIDO
+        cacheTimestamp = Date.now();
         guardarCache(cache);
 
         console.info(`[${new Date().toISOString()}] Caché actualizado exitosamente.`);
@@ -283,5 +268,6 @@ app.get('/api/status', (req, res) => {
 
 app.listen(PORT, () => {
     cargarCache();
-    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+    // --- CORRECCIÓN PARA RENDER ---
+    console.log(`✅ Servidor corriendo en el puerto ${PORT}`);
 });
