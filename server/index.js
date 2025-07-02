@@ -9,9 +9,7 @@ import path from 'path';
 dotenv.config();
 
 const app = express();
-// --- CORRECCIÓN PARA RENDER ---
-// Usamos el puerto que nos da el entorno, o 3001 si estamos en local.
-const PORT = process.env.PORT || 3001;
+const PORT = 3001;
 app.use(cors());
 
 // --- CONFIGURACIÓN DEL CACHÉ PERSISTENTE ---
@@ -60,7 +58,10 @@ const cargarCache = () => {
 
 // --- LÓGICA DE PUNTUACIÓN PRINCIPAL ---
 const calcularPronosticoDia = (datosDelDia, fecha) => {
-    if (!datosDelDia) return null;
+    if (!datosDelDia) {
+        console.warn(`No hay datos para la fecha: ${fecha.toISOString()}`);
+        return null;
+    }
 
     const sunTimes = SunCalc.getTimes(fecha, LATITUD, LONGITUD);
     
@@ -233,6 +234,7 @@ app.get('/api/prediccion', async (req, res) => {
         const resultadoFinal = Object.keys(normalizedData)
             .sort()
             .map(dateString => {
+                console.log(`[DEBUG] Procesando fecha: ${dateString}`); // Log de depuración
                 const fecha = new Date(dateString + 'T12:00:00Z'); 
                 return calcularPronosticoDia(normalizedData[dateString], fecha);
             })
@@ -268,6 +270,5 @@ app.get('/api/status', (req, res) => {
 
 app.listen(PORT, () => {
     cargarCache();
-    // --- CORRECCIÓN PARA RENDER ---
     console.log(`✅ Servidor corriendo en el puerto ${PORT}`);
 });
