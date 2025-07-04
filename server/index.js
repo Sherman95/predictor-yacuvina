@@ -184,26 +184,16 @@ app.get('/api/prediccion', async (req, res) => {
 
         const normalizedData = normalizeData(openMeteoResponse.data, openWeatherResponse.data);
 
-        // --- LÓGICA DE FECHAS MEJORADA ---
-        const resultadoFinal = [];
-        const ahoraEnEcuador = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Guayaquil' }));
-        const horaActual = ahoraEnEcuador.getHours();
-        
-        // Si ya son las 7 PM o más, empezamos el pronóstico desde mañana.
-        const diaDeInicio = horaActual >= 19 ? 1 : 0;
+        const resultadoFinal = Object.keys(normalizedData)
+            .sort()
+            .map(dateString => {
+                const fecha = new Date(dateString + 'T12:00:00Z'); 
+                return calcularPronosticoDia(normalizedData[dateString], fecha);
+            })
+            .filter(Boolean);
 
-        for (let i = diaDeInicio; i < (diaDeInicio + 7); i++) {
-            const fecha = new Date(ahoraEnEcuador);
-            fecha.setDate(fecha.getDate() + i);
-            const fechaString = fecha.toLocaleDateString('en-CA');
-            
-            const pronosticoDelDia = calcularPronosticoDia(normalizedData[fechaString], fecha);
-            if (pronosticoDelDia) {
-                resultadoFinal.push(pronosticoDelDia);
-            }
-        }
-
-        cache = resultadoFinal;
+        const top7 = resultadoFinal.slice(0, 7);
+        cache = top7;
         cacheTimestamp = Date.now();
         guardarCache(cache);
 
