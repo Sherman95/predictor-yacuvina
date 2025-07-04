@@ -12,34 +12,28 @@ const app = express();
 const PORT = 3001;
 app.use(cors());
 
-// --- CONFIGURACIÓN DEL CACHÉ PERSISTENTE ---
+// --- CONFIGURACIÓN ---
 const DATA_DIR = './data';
 const CACHE_FILE_PATH = path.join(DATA_DIR, 'cache.json');
 let cache;
 let cacheTimestamp;
 const CACHE_DURATION_MS = 3600 * 1000; // 1 hora
+const LATITUD = -3.572854;
+const LONGITUD = -79.689287;
 
-// --- VALIDACIÓN DE API KEYS AL INICIO ---
+// --- VALIDACIÓN DE API KEYS ---
 if (!process.env.OPENWEATHER_API_KEY || !process.env.WEATHERAPI_KEY) {
     console.error("FATAL ERROR: Las claves de API no están definidas en el archivo .env");
     process.exit(1);
 }
 
-// --- COORDENADAS EXACTAS ---
-const LATITUD = -3.572854;
-const LONGITUD = -79.689287;
-
 // --- FUNCIONES HELPER ---
-const promedio = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-
 const guardarCache = (data) => {
     try {
-        if (!fs.existsSync(DATA_DIR)) {
-            fs.mkdirSync(DATA_DIR);
-        }
+        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
         fs.writeFileSync(CACHE_FILE_PATH, JSON.stringify({ data, timestamp: Date.now() }));
     } catch (error) {
-        console.error("Error al guardar el caché en disco:", error.message);
+        console.error("Error al guardar caché:", error.message);
     }
 };
 
@@ -49,149 +43,116 @@ const cargarCache = () => {
             const { data, timestamp } = JSON.parse(fs.readFileSync(CACHE_FILE_PATH));
             cache = data;
             cacheTimestamp = timestamp;
-            console.info("Caché persistente cargado exitosamente.");
+            console.info("Caché persistente cargado.");
         }
     } catch (error) {
-        console.error("Error al cargar el caché del disco:", error.message);
+        console.error("Error al cargar caché:", error.message);
     }
 };
 
-// --- LÓGICA DE PUNTUACIÓN PRINCIPAL ---
-const calcularPronosticoDia = (datosDelDia, fecha) => {
-    if (!datosDelDia) {
-        console.warn(`No hay datos para la fecha: ${fecha.toISOString()}`);
-        return null;
-    }
+// --- LÓGICA DE PUNTUACIÓN PARA "MAR DE NUBES" ---
+const calcularPronosticoDia = (datosDia, fecha) => {
+    if (!datosDia?.openMeteo) return null; // Necesitamos Open-Meteo para esta lógica
 
     const sunTimes = SunCalc.getTimes(fecha, LATITUD, LONGITUD);
+    const horaAtardecerLocal = new Date(sunTimes.sunset).getHours();
     
-    let nubesFuentes = [], lluviaFuentes = [], tempFuentes = [], humedadFuentes = [], vientoFuentes = [];
-    
-    let owCercano = null;
-    if (datosDelDia.openWeather) {
-        const horaAtardecerLocal = new Date(sunTimes.sunset).getHours();
-        owCercano = datosDelDia.openWeather.reduce((prev, curr) => 
-            Math.abs(curr.hora - horaAtardecerLocal) < Math.abs(prev.hora - horaAtardecerLocal) ? curr : prev
-        );
-        nubesFuentes.push(owCercano.nubes);
-        lluviaFuentes.push(owCercano.lluvia);
-        tempFuentes.push(owCercano.temp);
-        humedadFuentes.push(owCercano.humedad);
-        vientoFuentes.push(owCercano.viento);
-    }
-    if (datosDelDia.weatherApi) {
-        lluviaFuentes.push(datosDelDia.weatherApi.lluvia);
-        tempFuentes.push(datosDelDia.weatherApi.temp);
-        humedadFuentes.push(datosDelDia.weatherApi.humedad);
-        vientoFuentes.push(datosDelDia.weatherApi.viento);
-    }
-    if (datosDelDia.openMeteo) {
-        nubesFuentes.push(datosDelDia.openMeteo.nubes);
-        tempFuentes.push(datosDelDia.openMeteo.temp);
+    // Buscamos el pronóstico horario más cercano a la puesta de sol
+    const pronosticoTarde = datosDia.openMeteo.horas.reduce((prev, curr) => 
+        Math.abs(curr.hora - horaAtardecerLocal) < Math.abs(prev.hora - horaAtardecerLocal) ? curr : prev
+    );
+
+    const { nubes_bajas, nubes_medias, nubes_altas, lluvia, visibilidad, temp } = pronosticoTarde;
+
+    let puntaje = 50; // Empezamos con un puntaje base
+    let razonPrincipal = "";
+
+    // 1. Bonificación por mar de nubes
+    if (nubes_bajas > 60) {
+        puntaje += (nubes_bajas - 60) * 0.5; // Fuerte bonificación
+        razonPrincipal = "Alta probabilidad de mar de nubes.";
+    } else {
+        puntaje -= (60 - nubes_bajas) * 0.5; // Penalización si no hay nubes bajas
+        razonPrincipal = "Baja probabilidad de mar de nubes.";
     }
 
-    if (nubesFuentes.length === 0) return null;
-
-    const nubesPromedio = promedio(nubesFuentes);
-    const lluviaPromedio = promedio(lluviaFuentes);
-    const tempPromedio = promedio(tempFuentes);
-    const humedadPromedio = promedio(humedadFuentes);
-    const vientoPromedio = promedio(vientoFuentes);
-
-    const desviacionNubes = Math.sqrt(promedio(nubesFuentes.map(x => Math.pow(x - nubesPromedio, 2))));
-    let confianza = Math.max(50, 99 - desviacionNubes * 1.5);
-    if (nubesFuentes.length >= 2) confianza = Math.min(99, confianza + 5);
-    if (nubesFuentes.length === 1) confianza = 65;
-
-    let puntajeFinal = 100;
-    puntajeFinal -= (nubesPromedio * 0.6);
-    puntajeFinal -= (lluviaPromedio * 0.2);
-    puntajeFinal -= (humedadPromedio * 0.1);
-    puntajeFinal -= (vientoPromedio * 0.5);
-
-    if (datosDelDia.weatherApi && datosDelDia.weatherApi.visibilidad < 8) {
-        puntajeFinal -= 20;
+    // 2. Penalización por cielo superior cubierto
+    const nubesSuperiores = (nubes_medias + nubes_altas) / 2;
+    if (nubesSuperiores > 40) {
+        puntaje -= (nubesSuperiores - 40) * 0.8; // Fuerte penalización
+        if (!razonPrincipal || nubesSuperiores > 70) razonPrincipal = "Cielo superior muy nublado.";
     }
 
-    puntajeFinal = Math.max(0, Math.min(100, puntajeFinal));
+    // 3. Penalización por lluvia y baja visibilidad
+    if (lluvia > 30) {
+        puntaje -= lluvia * 0.3;
+        if (!razonPrincipal) razonPrincipal = "Riesgo de lluvia.";
+    }
+    if (visibilidad < 10) {
+        puntaje -= (10 - visibilidad) * 3; // Fuerte penalización por neblina
+        if (!razonPrincipal) razonPrincipal = "Posible neblina en el sitio.";
+    }
+
+    puntaje = Math.max(0, Math.min(100, puntaje));
 
     let prediccionTexto;
-    if (puntajeFinal >= 82) { prediccionTexto = "Excelente ✨"; }
-    else if (puntajeFinal >= 70) { prediccionTexto = "Bueno 🌤️"; }
-    else if (puntajeFinal >= 55) { prediccionTexto = "Regular ☁️"; }
+    if (puntaje >= 85) { prediccionTexto = "Excelente ✨"; }
+    else if (puntaje >= 70) { prediccionTexto = "Bueno 🌤️"; }
+    else if (puntaje >= 50) { prediccionTexto = "Regular ☁️"; }
     else { prediccionTexto = "Malo 😞"; }
-
-    let tendenciaCielo = "estable";
-    if (datosDelDia.openWeather) {
-        const ow18h = datosDelDia.openWeather.find(p => p.hora === 18);
-        const ow21h = datosDelDia.openWeather.find(p => p.hora === 21);
-        if (ow18h && ow21h) {
-            const cambio = ow18h.nubes - ow21h.nubes;
-            if (cambio > 20) tendenciaCielo = "despejando";
-            else if (cambio < -20) tendenciaCielo = "empeorando";
-        }
-    }
-
-    const icono = owCercano?.icono || '02d';
 
     return {
         diaSemana: fecha.toLocaleDateString('es-EC', { weekday: 'long', timeZone: 'America/Guayaquil' }),
         fecha: fecha.toLocaleDateString('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }),
-        prediccion: prediccionTexto + (tendenciaCielo !== 'estable' ? ` (${tendenciaCielo})` : ''),
-        confianza: Math.round(confianza),
-        temperatura: Math.round(tempPromedio),
-        icono: icono,
+        prediccion: prediccionTexto,
+        razon: razonPrincipal,
+        confianza: Math.round(75 + (puntaje / 10)), // Confianza simple basada en el puntaje
+        temperatura: Math.round(temp),
+        icono: datosDia.openWeather?.find(p => p.hora === horaAtardecerLocal)?.icono || '03d',
         horaAtardecer: new Date(sunTimes.sunset).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
-        detalles: {
-            nubes: Math.round(nubesPromedio), lluvia: Math.round(lluviaPromedio),
-            humedad: Math.round(humedadPromedio), viento: Math.round(vientoPromedio),
-            visibilidad: datosDelDia.weatherApi?.visibilidad ?? null,
-            puntaje: Math.round(puntajeFinal), tendencia: tendenciaCielo,
-            sourceCount: nubesFuentes.length
-        }
     };
 };
 
-// --- FUNCIÓN PARA NORMALIZAR DATOS ---
-const normalizeData = (openWeatherData, weatherApiData, openMeteoData) => {
+// --- NORMALIZACIÓN DE DATOS ---
+const normalizeData = (openMeteoData, openWeatherData) => {
     const combinedData = {};
     const getLocalDateString = (dateObj) => new Date(dateObj).toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
 
-    if (Array.isArray(openWeatherData?.list)) {
-        openWeatherData.list.forEach(item => {
-            const date = getLocalDateString(new Date(item.dt * 1000));
-            if (!combinedData[date]) combinedData[date] = { openWeather: [] };
-            const horaLocal = parseInt(new Date(item.dt * 1000).toLocaleTimeString('en-US', { hour12: false, hour: 'numeric', timeZone: 'America/Guayaquil' }));
-            combinedData[date].openWeather.push({
-                nubes: item.clouds.all, lluvia: item.pop * 100, temp: item.main.temp,
-                icono: item.weather[0].icon, hora: horaLocal,
-                humedad: item.main.humidity, viento: item.wind.speed * 3.6
+    if (openMeteoData?.hourly?.time) {
+        openMeteoData.hourly.time.forEach((timestamp, index) => {
+            const fecha = new Date(timestamp);
+            const dateString = getLocalDateString(fecha);
+            if (!combinedData[dateString]) combinedData[dateString] = { openMeteo: { horas: [] } };
+            
+            combinedData[dateString].openMeteo.horas.push({
+                hora: fecha.getHours(),
+                nubes_bajas: openMeteoData.hourly.cloudcover_low[index],
+                nubes_medias: openMeteoData.hourly.cloudcover_mid[index],
+                nubes_altas: openMeteoData.hourly.cloudcover_high[index],
+                lluvia: openMeteoData.hourly.precipitation_probability[index],
+                visibilidad: openMeteoData.hourly.visibility[index] / 1000, // a km
+                temp: openMeteoData.hourly.temperature_2m[index],
             });
         });
     }
-    if (Array.isArray(weatherApiData?.forecast?.forecastday)) {
-        weatherApiData.forecast.forecastday.forEach(day => {
-            const date = day.date;
-            if (!combinedData[date]) combinedData[date] = {};
-            combinedData[date].weatherApi = {
-                lluvia: day.day.daily_chance_of_rain, temp: day.day.avgtemp_c,
-                visibilidad: day.day.avgvis_km, humedad: day.day.avghumidity, viento: day.day.maxwind_kph
-            };
+
+    // Añadimos datos de OpenWeather solo como fuente secundaria para el ícono
+    if (Array.isArray(openWeatherData?.list)) {
+        openWeatherData.list.forEach(item => {
+            const date = getLocalDateString(new Date(item.dt * 1000));
+            if (!combinedData[date]) return;
+            if (!combinedData[date].openWeather) combinedData[date].openWeather = [];
+            const horaLocal = parseInt(new Date(item.dt * 1000).toLocaleTimeString('en-US', { hour12: false, hour: 'numeric', timeZone: 'America/Guayaquil' }));
+            combinedData[date].openWeather.push({
+                icono: item.weather[0].icon, hora: horaLocal,
+            });
         });
     }
-    if (Array.isArray(openMeteoData?.daily?.time)) {
-        openMeteoData.daily.time.forEach((date, index) => {
-            if (!combinedData[date]) combinedData[date] = {};
-            combinedData[date].openMeteo = {
-                nubes: openMeteoData.daily.cloudcover_mean[index],
-                temp: openMeteoData.daily.temperature_2m_max[index],
-            };
-        });
-    }
+
     return combinedData;
 };
 
-// --- ENDPOINT PRINCIPAL DE LA API ---
+// --- ENDPOINT PRINCIPAL ---
 app.get('/api/prediccion', async (req, res) => {
     if (cache && cacheTimestamp && (Date.now() - cacheTimestamp < CACHE_DURATION_MS)) {
         console.info(`[${new Date().toISOString()}] Sirviendo desde caché.`);
@@ -202,46 +163,31 @@ app.get('/api/prediccion', async (req, res) => {
     try {
         console.info(`[${new Date().toISOString()}] Actualizando datos desde APIs...`);
         const openWeatherKey = process.env.OPENWEATHER_API_KEY;
-        const weatherApiKey = process.env.WEATHERAPI_KEY;
 
+        const urlOpenMeteo = `https://api.open-meteo.com/v1/forecast?latitude=${LATITUD}&longitude=${LONGITUD}&hourly=temperature_2m,precipitation_probability,cloudcover_low,cloudcover_mid,cloudcover_high,visibility&timezone=America/Guayaquil`;
         const urlOpenWeather = `https://api.openweathermap.org/data/2.5/forecast?lat=${LATITUD}&lon=${LONGITUD}&appid=${openWeatherKey}&units=metric`;
-        const urlWeatherApi = `https://api.weatherapi.com/v1/forecast.json?key=${weatherApiKey}&q=${LATITUD},${LONGITUD}&days=10&aqi=no&alerts=no`;
-        const urlOpenMeteo = `https://api.open-meteo.com/v1/forecast?latitude=${LATITUD}&longitude=${LONGITUD}&daily=temperature_2m_max,cloudcover_mean&timezone=America/Guayaquil`;
 
-        const responses = await Promise.all([
-            axios.get(urlOpenWeather).catch(e => { console.error("Error en OpenWeather API:", e.message); return { error: e }; }),
-            axios.get(urlWeatherApi).catch(e => { console.error("Error en WeatherAPI:", e.message); return { error: e }; }),
-            axios.get(urlOpenMeteo).catch(e => { console.error("Error en Open-Meteo API:", e.message); return { error: e }; })
+        const [openMeteoResponse, openWeatherResponse] = await Promise.all([
+            axios.get(urlOpenMeteo).catch(e => { console.error("Error en Open-Meteo API:", e.message); return { error: e }; }),
+            axios.get(urlOpenWeather).catch(e => { console.error("Error en OpenWeather API:", e.message); return { error: e }; })
         ]);
 
-        const [openWeatherResponse, weatherApiResponse, openMeteoResponse] = responses;
-        if (openWeatherResponse.error || weatherApiResponse.error || openMeteoResponse.error) {
-            console.error("Fallo una o más llamadas a las APIs externas.");
-            if (cache) {
-                console.warn("Sirviendo caché antiguo debido a fallo de API.");
-                res.setHeader('Cache-Control', `public, max-age=60`);
-                return res.json(cache);
-            }
-            throw new Error("No se pudo obtener datos de todas las fuentes y no hay caché disponible.");
+        if (openMeteoResponse.error) {
+            throw new Error("La fuente principal de datos (Open-Meteo) falló.");
         }
 
-        const normalizedData = normalizeData(
-            openWeatherResponse.data, 
-            weatherApiResponse.data, 
-            openMeteoResponse.data
-        );
+        const normalizedData = normalizeData(openMeteoResponse.data, openWeatherResponse.data);
 
         const resultadoFinal = Object.keys(normalizedData)
             .sort()
             .map(dateString => {
-                console.log(`[DEBUG] Procesando fecha: ${dateString}`); // Log de depuración
                 const fecha = new Date(dateString + 'T12:00:00Z'); 
                 return calcularPronosticoDia(normalizedData[dateString], fecha);
             })
             .filter(Boolean);
 
-        const top10 = [...resultadoFinal].slice(0, 10);
-        cache = top10;
+        const top7 = resultadoFinal.slice(0, 7); // Open-Meteo da 7 días
+        cache = top7;
         cacheTimestamp = Date.now();
         guardarCache(cache);
 
@@ -251,21 +197,8 @@ app.get('/api/prediccion', async (req, res) => {
 
     } catch (error) {
         console.error("Error en el endpoint /api/prediccion:", error.message);
-        res.status(500).json({ message: "Error al obtener y procesar los datos de múltiples fuentes." });
+        res.status(500).json({ message: "Error al obtener y procesar los datos." });
     }
-});
-
-// --- ENDPOINT DE SALUD ---
-app.get('/api/status', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        cache: {
-            hasCache: !!cache,
-            isExpired: cacheTimestamp ? (Date.now() - cacheTimestamp > CACHE_DURATION_MS) : null,
-            lastUpdate: cacheTimestamp ? new Date(cacheTimestamp).toISOString() : null
-        }
-    });
 });
 
 app.listen(PORT, () => {
