@@ -22,8 +22,8 @@ const LATITUD = -3.572854;
 const LONGITUD = -79.689287;
 
 // --- VALIDACIÓN DE API KEYS ---
-if (!process.env.OPENWEATHER_API_KEY || !process.env.WEATHERAPI_KEY) {
-    console.error("FATAL ERROR: Las claves de API no están definidas en el archivo .env");
+if (!process.env.OPENWEATHER_API_KEY) {
+    console.error("FATAL ERROR: La clave de API de OpenWeather no está definida en el archivo .env");
     process.exit(1);
 }
 
@@ -50,63 +50,75 @@ const cargarCache = () => {
     }
 };
 
-// --- LÓGICA DE PUNTUACIÓN PARA "MAR DE NUBES" ---
+// --- LÓGICA DE PUNTUACIÓN RECALIBRADA PARA "MAR DE NUBES" ---
 const calcularPronosticoDia = (datosDia, fecha) => {
-    if (!datosDia?.openMeteo) return null; // Necesitamos Open-Meteo para esta lógica
+    if (!datosDia?.openMeteo?.horas?.length) return null;
 
     const sunTimes = SunCalc.getTimes(fecha, LATITUD, LONGITUD);
     const horaAtardecerLocal = new Date(sunTimes.sunset).getHours();
     
-    // Buscamos el pronóstico horario más cercano a la puesta de sol
     const pronosticoTarde = datosDia.openMeteo.horas.reduce((prev, curr) => 
         Math.abs(curr.hora - horaAtardecerLocal) < Math.abs(prev.hora - horaAtardecerLocal) ? curr : prev
     );
 
     const { nubes_bajas, nubes_medias, nubes_altas, lluvia, visibilidad, temp } = pronosticoTarde;
 
-    let puntaje = 50; // Empezamos con un puntaje base
+    let puntaje = 0;
     let razonPrincipal = "";
 
-    // 1. Bonificación por mar de nubes
-    if (nubes_bajas > 60) {
-        puntaje += (nubes_bajas - 60) * 0.5; // Fuerte bonificación
-        razonPrincipal = "Alta probabilidad de mar de nubes.";
-    } else {
-        puntaje -= (60 - nubes_bajas) * 0.5; // Penalización si no hay nubes bajas
-        razonPrincipal = "Baja probabilidad de mar de nubes.";
-    }
+    // 1. Puntos por nubes bajas (el "mar"). Máximo 60 puntos.
+    puntaje += (nubes_bajas / 100) * 60;
 
-    // 2. Penalización por cielo superior cubierto
+    // 2. Puntos por cielo superior despejado. Máximo 40 puntos.
     const nubesSuperiores = (nubes_medias + nubes_altas) / 2;
-    if (nubesSuperiores > 40) {
-        puntaje -= (nubesSuperiores - 40) * 0.8; // Fuerte penalización
-        if (!razonPrincipal || nubesSuperiores > 70) razonPrincipal = "Cielo superior muy nublado.";
-    }
+    puntaje += ((100 - nubesSuperiores) / 100) * 40;
 
-    // 3. Penalización por lluvia y baja visibilidad
-    if (lluvia > 30) {
-        puntaje -= lluvia * 0.3;
-        if (!razonPrincipal) razonPrincipal = "Riesgo de lluvia.";
+    // 3. Penalizaciones sobre el puntaje ya calculado.
+    if (lluvia > 25) {
+        puntaje -= lluvia * 0.4; // Penalización fuerte
+        razonPrincipal = "Alto riesgo de lluvia.";
     }
     if (visibilidad < 10) {
-        puntaje -= (10 - visibilidad) * 3; // Fuerte penalización por neblina
-        if (!razonPrincipal) razonPrincipal = "Posible neblina en el sitio.";
+        puntaje -= (10 - visibilidad) * 4; // Penalización muy fuerte por neblina
+        razonPrincipal = "Posible neblina en el sitio.";
     }
 
     puntaje = Math.max(0, Math.min(100, puntaje));
 
     let prediccionTexto;
-    if (puntaje >= 85) { prediccionTexto = "Excelente ✨"; }
-    else if (puntaje >= 70) { prediccionTexto = "Bueno 🌤️"; }
-    else if (puntaje >= 50) { prediccionTexto = "Regular ☁️"; }
-    else { prediccionTexto = "Malo 😞"; }
+
+    // --- NUEVA CONDICIÓN PARA "MAR DE NUBES IDEAL" ---
+    const esMarDeNubesIdeal = (
+        nubes_bajas >= 80 &&
+        nubesSuperiores <= 20 &&
+        lluvia < 10 &&
+        visibilidad >= 10
+    );
+
+    if (esMarDeNubesIdeal) {
+        prediccionTexto = "✨ Mar de nubes ideal ✨";
+        razonPrincipal = "¡Sube con tu cámara! 📸 Condiciones perfectas.";
+    } else if (puntaje >= 88) {
+        prediccionTexto = "Excelente ✨";
+    } else if (puntaje >= 75) {
+        prediccionTexto = "Bueno 🌤️";
+    } else if (puntaje >= 60) {
+        prediccionTexto = "Regular ☁️";
+    } else {
+        prediccionTexto = "Malo 😞";
+    }
+
+    if (!razonPrincipal && puntaje < 75) {
+        if (nubesSuperiores > 50) razonPrincipal = "Cielo superior algo cubierto.";
+        else if (nubes_bajas < 50) razonPrincipal = "Baja probabilidad de mar de nubes.";
+    }
 
     return {
         diaSemana: fecha.toLocaleDateString('es-EC', { weekday: 'long', timeZone: 'America/Guayaquil' }),
         fecha: fecha.toLocaleDateString('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }),
         prediccion: prediccionTexto,
         razon: razonPrincipal,
-        confianza: Math.round(75 + (puntaje / 10)), // Confianza simple basada en el puntaje
+        confianza: Math.round(70 + (puntaje / 5)), // Confianza simple basada en el puntaje
         temperatura: Math.round(temp),
         icono: datosDia.openWeather?.find(p => p.hora === horaAtardecerLocal)?.icono || '03d',
         horaAtardecer: new Date(sunTimes.sunset).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
@@ -130,13 +142,12 @@ const normalizeData = (openMeteoData, openWeatherData) => {
                 nubes_medias: openMeteoData.hourly.cloudcover_mid[index],
                 nubes_altas: openMeteoData.hourly.cloudcover_high[index],
                 lluvia: openMeteoData.hourly.precipitation_probability[index],
-                visibilidad: openMeteoData.hourly.visibility[index] / 1000, // a km
+                visibilidad: openMeteoData.hourly.visibility[index] / 1000,
                 temp: openMeteoData.hourly.temperature_2m[index],
             });
         });
     }
 
-    // Añadimos datos de OpenWeather solo como fuente secundaria para el ícono
     if (Array.isArray(openWeatherData?.list)) {
         openWeatherData.list.forEach(item => {
             const date = getLocalDateString(new Date(item.dt * 1000));
@@ -186,7 +197,7 @@ app.get('/api/prediccion', async (req, res) => {
             })
             .filter(Boolean);
 
-        const top7 = resultadoFinal.slice(0, 7); // Open-Meteo da 7 días
+        const top7 = resultadoFinal.slice(0, 7);
         cache = top7;
         cacheTimestamp = Date.now();
         guardarCache(cache);
