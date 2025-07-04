@@ -34,14 +34,17 @@ function App() {
 
   const mejorDia = useMemo(() => {
     if (!pronostico.length) return null;
-    const excelente = pronostico.find(d => d.prediccion.startsWith("Excelente"));
+    const ideal = pronostico.find(d => d.prediccion === "Mar de Nubes Ideal");
+    if (ideal) return ideal;
+    const excelente = pronostico.find(d => d.prediccion === "Excelente");
     if (excelente) return excelente;
-    const bueno = pronostico.find(d => d.prediccion.startsWith("Bueno"));
+    const bueno = pronostico.find(d => d.prediccion === "Bueno");
     if (bueno) return bueno;
     return null;
   }, [pronostico]);
 
   const getCardColor = (prediccion) => {
+    if (prediccion.startsWith("Mar de Nubes")) return 'card-ideal';
     if (prediccion.startsWith("Excelente")) return 'card-excelente';
     if (prediccion.startsWith("Bueno")) return 'card-bueno';
     if (prediccion.startsWith("Regular")) return 'card-regular';
@@ -72,32 +75,31 @@ function App() {
         {actualizado && <p className="actualizado">Última actualización: {actualizado.toLocaleTimeString('es-EC')}</p>}
       </header>
       
+      {/* --- SECCIÓN DE INFORMACIÓN ACTUALIZADA --- */}
       <section className="info-detallada">
-        <h2>Conoce la Historia y Secretos de Yacuviña</h2>
         <div className="info-grid">
           <div className="info-card">
-            <h3>🌊 El Significado de su Nombre</h3>
-            <p>Yacuviña proviene de las voces quichuas "yacu" (agua) y "viñay" (siempre), traduciéndose como <strong>"Agua Eterna"</strong>.</p>
+            <h3>Ubicación y Altitud</h3>
+            <p>A 6 km de Paccha, Yacuviña se alza entre 1,500 y 2,450 msnm, ofreciendo un microclima ideal para disfrutar del mar de nubes en las montañas.</p>
           </div>
           <div className="info-card">
-            <h3>📜 Un Pasado de Conflictos</h3>
-            <p>Se cree que el sitio se remonta a 1533, en medio de la disputa por el Tahuantinsuyo entre <strong>Huáscar y Atahualpa</strong>.</p>
+            <h3>Patrimonio e Historia</h3>
+            <p>Este inmenso complejo arqueológico (≈100 ha) reúne terrazas, graderíos y templos Inca-Cañari, conectados por el antiguo Qhapaq Ñan.</p>
           </div>
           <div className="info-card">
-            <h3>🗺️ ¿Cómo Llegar?</h3>
-            <p>Desde Paccha, el complejo está a solo 20 minutos. Las rutas desde Machala son:</p>
-            <ul>
-              <li><strong>Ruta 1 (90 min):</strong> Machala → Pasaje → Paccha.</li>
-              <li><strong>Ruta 2 (120 min):</strong> Machala → Santa Rosa → Piñas → Paccha.</li>
-            </ul>
+            <h3>Mejor Temporada</h3>
+            <p>De julio a octubre ofrece atardeceres inolvidables, con el sol poniéndose sobre un mar de nubes visible desde el mirador.</p>
+          </div>
+          <div className="info-card">
+            <h3>Recomendaciones</h3>
+            <p>Usa ropa deportiva, trae abrigo, protector solar, agua y un poncho por la posibilidad de lluvias repentinas.</p>
           </div>
         </div>
-        <p className="info-fuente">Información adaptada de fuentes del GAD de Atahualpa y AME.</p>
       </section>
 
       {mejorDia && (
         <div className="mejor-dia-banner">
-          <h3>🏆 Mejor Día para Ir</h3>
+          <h3>Mejor Día para Ir</h3>
           <p>{mejorDia.diaSemana}, {mejorDia.fecha}</p>
           <span>Predicción: {mejorDia.prediccion}</span>
         </div>
@@ -110,20 +112,22 @@ function App() {
             <p className="fecha">{dia.fecha}</p>
             <img className="weather-icon" src={`http://openweathermap.org/img/wn/${dia.icono}@2x.png`} alt="Icono del clima" />
             <p className="prediccion-texto">{dia.prediccion}</p>
-            {/* --- LÍNEA AÑADIDA PARA MOSTRAR LA RAZÓN --- */}
             {dia.razon && <p className="razon-texto">{dia.razon}</p>}
-            <div className="detalles"><p>🌡️ {dia.temperatura}°C</p><p>🌅 {dia.horaAtardecer}</p></div>
+            <div className="detalles">
+              <p><span>Temp:</span> {dia.temperatura}°C</p>
+              <p><span>Atardecer:</span> {dia.horaAtardecer}</p>
+            </div>
             <div className="confianza"><span>Confianza: <strong>{dia.confianza}%</strong></span></div>
           </div>
         ))}
       </div>
 
       <section className="actividades-container">
-        <h2>Actividades y Atracciones</h2>
+        <h2>Actividades Destacadas</h2>
         <ul>
-          <li><strong>Recorrido Arqueológico:</strong> Explora el Ushno, las terrazas agrícolas y los senderos señalizados.</li>
-          <li><strong>Columpio "Tocando el Cielo":</strong> Para los amantes de la adrenalina, una foto espectacular con el paisaje andino de fondo.</li>
-          <li><strong>Senderismo y Acampada:</strong> Recorre los antiguos caminos y disfruta de un increíble cielo nocturno.</li>
+            <li>Camina por senderos arqueológicos (1-2 h).</li>
+            <li>Sube al columpio “Tocando el Cielo” por ∼USD 3.</li>
+            <li>Captura vistas épicas del paisaje y el mar de nubes.</li>
         </ul>
       </section>
 
@@ -165,7 +169,7 @@ function App() {
         <div className="mapa-responsive">
           <iframe
             title="Vista 360 de Yacuviña"
-            src="https://www.google.com/maps/embed?pb=!4v1751332934009!6m8!1m7!1sCAoSF0NJSE0wb2dLRUlDQWdJQzdrWUt4X1FF!2m2!1d-3.572848275839934!2d-79.6892796068284!3f26.960414397162744!4f9.525061890646285!5f0.7820865974627469"
+            src="https://www.google.com/maps/embed?pb=!4v1751332934009!6m8!1m7!1sCAoSF0NJSE0wb2dLRUlDQWdJQzdrWUt4X1FF!2m2!1d-3.572848275839934!2d-79.689287!3f26.960414397162744!4f9.525061890646285!5f0.7820865974627469"
             width="600"
             height="450"
             style={{ border: 0 }}
@@ -180,12 +184,23 @@ function App() {
         <div className="creditos">
           <h4>Fuentes y Créditos</h4>
           <p>
-            <strong>Pronóstico del Clima:</strong> OpenWeatherMap, WeatherAPI, Open-Meteo | 
-            <strong> Información Histórica:</strong> GAD de Atahualpa & AME |
-            <strong> Video:</strong> Altaturis
+            <strong>Pronóstico del Clima:</strong> OpenWeatherMap, WeatherAPI, Open-Meteo.
+          </p>
+           <p>
+            <strong>Información:</strong> GAD de Atahualpa, AME, Escafandra News, Viajar en Ecuador, Meet Ecuador, y otras fuentes públicas.
+          </p>
+           <p>
+            <strong>Contenido Multimedia:</strong> Altaturis (Video).
           </p>
         </div>
-        <p className="desarrollador">Desarrollado con ❤️ por un entusiasta de los atardeceres.</p>
+        {/* --- FIRMA DEL DESARROLLADOR ACTUALIZADA --- */}
+        <p className="desarrollador">
+          Desarrollado por <strong>Ronald Azuero</strong> – Estudiante de 6to semestre de la carrera de Tecnologías de la Información en la <strong>Universidad Técnica de Machala</strong> 📚<br />
+          Tecnologías: Angular · React · C# · Java · SQL Server · PostgreSQL · MySQL 💻<br />
+          Motivación: Vi una necesidad propia y decidí compartir la solución con todos 🌄<br />
+          <a href="mailto:sherman.2003.a@gmail.com">sherman.2003.a@gmail.com</a> |
+          <a href="https://github.com/Sherman95" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </p>
       </footer>
     </div>
   );
