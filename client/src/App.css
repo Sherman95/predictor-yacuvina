@@ -470,3 +470,19 @@
      gap: 5px;
    }
  }
+
+ /* Añade esto en cualquier parte de App.css */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.refreshing-indicator {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  margin-left: 8px; /* Espacio para separarlo del texto */
+}
