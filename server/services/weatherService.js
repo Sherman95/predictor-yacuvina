@@ -3,16 +3,22 @@ import SunCalc from 'suncalc';
 import fs from 'fs/promises';
 import { config } from '../config/index.js';
 
-// ADAPTADORES DE API
+// =================================================================
+// SECCIÓN 1: ADAPTADORES DE API
+// Responsabilidad: Traducir datos crudos de cada API a un formato estándar.
+// =================================================================
+
 const adaptarOpenMeteo = (data) => {
     const datosAdaptados = {};
     const getLocalDateString = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+
     data.hourly.time.forEach((timestamp, index) => {
         const fecha = new Date(timestamp);
         const dateString = getLocalDateString(fecha);
         const hora = fecha.getHours();
         if (!datosAdaptados[dateString]) datosAdaptados[dateString] = {};
         if (!datosAdaptados[dateString][hora]) datosAdaptados[dateString][hora] = {};
+        
         datosAdaptados[dateString][hora] = {
             nubes_bajas: data.hourly.cloudcover_low[index],
             nubes_medias: data.hourly.cloudcover_mid[index],
@@ -28,12 +34,14 @@ const adaptarOpenMeteo = (data) => {
 const adaptarOpenWeather = (data) => {
     const datosAdaptados = {};
     const getLocalDateString = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+
     data.list.forEach(item => {
         const fecha = new Date(item.dt * 1000);
         const dateString = getLocalDateString(fecha);
         const hora = fecha.getHours();
         if (!datosAdaptados[dateString]) datosAdaptados[dateString] = {};
         if (!datosAdaptados[dateString][hora]) datosAdaptados[dateString][hora] = {};
+
         datosAdaptados[dateString][hora] = {
             lluvia_ow: item.pop * 100,
             icono: item.weather[0].icon,
@@ -45,12 +53,14 @@ const adaptarOpenWeather = (data) => {
 const adaptarAccuweather = (data) => {
     const datosAdaptados = {};
     const getLocalDateString = (d) => new Date(d).toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+
     data.forEach(hourData => {
         const fecha = new Date(hourData.DateTime);
         const dateString = getLocalDateString(fecha);
         const hora = fecha.getHours();
         if (!datosAdaptados[dateString]) datosAdaptados[dateString] = {};
         if (!datosAdaptados[dateString][hora]) datosAdaptados[dateString][hora] = {};
+
         datosAdaptados[dateString][hora] = {
             lluvia_aw: hourData.PrecipitationProbability,
             techo_nubes: hourData.Ceiling?.Metric?.Value,
@@ -74,70 +84,111 @@ const combinarDatosAdaptados = (...fuentes) => {
     return datosCombinados;
 };
 
-// LÓGICA DE PUNTUACIÓN
+
+// =================================================================
+// SECCIÓN 2: LÓGICA DE PUNTUACIÓN (REFACTORIZADA CON TUS IDEAS)
+// =================================================================
+
+/**
+ * Calcula el puntaje para un escenario de "Mar de Nubes".
+ * @returns {number}
+ */
+const calcularScoreMarDeNubes = (nubesBajas, nubesSuperiores) => {
+    return (nubesBajas / 100) * 60 + ((100 - nubesSuperiores) / 100) * 40;
+};
+
+/**
+ * Calcula el puntaje para un escenario de "Cielo Incendiado".
+ * @returns {number}
+ */
+const calcularScoreCieloIncendiado = (nubesBajas, nubesMedias, nubesAltas) => {
+    const puntajeColor = (nubesAltas * 0.7) + (nubesMedias * 0.3);
+    const puntajeClaridad = (100 - nubesBajas);
+    return (puntajeColor * 0.7) + (puntajeClaridad * 0.3);
+};
+
+/**
+ * Convierte un puntaje numérico a un texto de predicción.
+ * @returns {string}
+ */
+function convertirPuntajeATexto(puntaje) {
+    if (puntaje >= 88) return "Excelente";
+    if (puntaje >= 75) return "Bueno";
+    if (puntaje >= 60) return "Regular";
+    return "Malo";
+}
+
 const calcularPronosticoDia = (datosDia, fecha) => {
-    if (!datosDia?.horas) return null;
+    if (!datosDia?.horas || Object.keys(datosDia.horas).length === 0) return null;
+
     const sunTimes = SunCalc.getTimes(fecha, config.latitud, config.longitud);
     const horaAtardecerLocal = new Date(sunTimes.sunset).getHours();
-    const pronosticoTarde = datosDia.horas[horaAtardecerLocal];
-    if(!pronosticoTarde) return null;
 
-    const { nubes_bajas, nubes_medias, nubes_altas, visibilidad, temp, techo_nubes } = pronosticoTarde;
+    // MEJORA: Búsqueda de la hora más cercana para evitar errores
+    const horasDisponibles = Object.keys(datosDia.horas).map(Number);
+    const horaCercana = horasDisponibles.reduce((prev, curr) => 
+        Math.abs(curr - horaAtardecerLocal) < Math.abs(prev - horaAtardecerLocal) ? curr : prev
+    );
+    const pronosticoTarde = datosDia.horas[horaCercana];
+    if (!pronosticoTarde) return null;
+
+    const { visibilidad, temp, techo_nubes } = pronosticoTarde;
+    
     const fuentesLluvia = [];
     if (pronosticoTarde.lluvia_om !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_om);
     if (pronosticoTarde.lluvia_ow !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_ow);
     if (pronosticoTarde.lluvia_aw !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_aw);
     const promedioLluvia = fuentesLluvia.length > 0 ? fuentesLluvia.reduce((a, b) => a + b, 0) / fuentesLluvia.length : 0;
-
-    const scoreNubesBajas = nubes_bajas ?? 0;
-    const scoreNubesMedias = nubes_medias ?? 0;
-    const scoreNubesAltas = nubes_altas ?? 0;
+    
+    const scoreNubesBajas = pronosticoTarde.nubes_bajas ?? 0;
+    const scoreNubesMedias = pronosticoTarde.nubes_medias ?? 0;
+    const scoreNubesAltas = pronosticoTarde.nubes_altas ?? 0;
     const nubesSuperiores = (scoreNubesMedias + scoreNubesAltas) / 2;
-
-    let scoreMarDeNubes = (scoreNubesBajas / 100) * 60 + ((100 - nubesSuperiores) / 100) * 40;
-    const puntajeColor = (scoreNubesAltas * 0.7) + (scoreNubesMedias * 0.3);
-    const puntajeClaridad = (100 - scoreNubesBajas);
-    let scoreCieloIncendiado = (puntajeColor * 0.7) + (puntajeClaridad * 0.3);
-
+    
     let puntaje;
     let razonPrincipal = "";
-    if (scoreMarDeNubes > scoreCieloIncendiado) {
-        puntaje = scoreMarDeNubes;
-        razonPrincipal = "Buenas condiciones para mar de nubes.";
-        const altitudMirador = 2300;
-        if (techo_nubes < altitudMirador && techo_nubes > 0) {
-            puntaje += 15;
-            razonPrincipal = "Techo de nubes bajo, ideal para mar de nubes.";
-        }
+
+    if (scoreNubesBajas > 70 && nubesSuperiores > 50) {
+        puntaje = 30;
+        razonPrincipal = "Cielo completamente cubierto, sin visibilidad.";
     } else {
-        puntaje = scoreCieloIncendiado;
-        razonPrincipal = "Potencial de cielo muy colorido.";
+        const scoreMarDeNubes = calcularScoreMarDeNubes(scoreNubesBajas, nubesSuperiores);
+        const scoreCieloIncendiado = calcularScoreCieloIncendiado(scoreNubesBajas, scoreNubesMedias, scoreNubesAltas);
+
+        if (scoreMarDeNubes > scoreCieloIncendiado) {
+            puntaje = scoreMarDeNubes;
+            razonPrincipal = "Buenas condiciones para mar de nubes.";
+        } else {
+            puntaje = scoreCieloIncendiado;
+            razonPrincipal = "Potencial de cielo muy colorido.";
+        }
+    }
+    
+    const altitudMirador = 2300;
+    // MEJORA: Validación robusta de techo_nubes
+    if (typeof techo_nubes === 'number' && techo_nubes < altitudMirador && techo_nubes > 0) {
+        puntaje += 15;
+        razonPrincipal = "Techo de nubes bajo, ideal para mar de nubes.";
     }
 
-    if (visibilidad < 10) {
+    if (visibilidad !== undefined && visibilidad < 10) {
         puntaje -= (10 - visibilidad) * 4;
         razonPrincipal = "Posible neblina en el sitio.";
     }
     puntaje = Math.max(0, Math.min(100, puntaje));
 
-    if (promedioLluvia >= 35 && puntaje >= 75) {
-        puntaje = 74; 
-        razonPrincipal = `Alto riesgo de lluvia (${Math.round(promedioLluvia)}% promedio).`;
-    } else if (promedioLluvia > 25) {
+    if (promedioLluvia >= 30 && puntaje >= 75) {
+        puntaje = 74;
+        razonPrincipal = `Alto riesgo de lluvia (${Math.round(promedioLluvia)}%).`;
+    } else if (promedioLluvia > 20) {
         puntaje -= promedioLluvia * 0.4;
     }
     puntaje = Math.max(0, Math.min(100, puntaje));
 
-    let prediccionTexto;
-    if (puntaje >= 88) prediccionTexto = "Excelente";
-    else if (puntaje >= 75) prediccionTexto = "Bueno";
-    else if (puntaje >= 60) prediccionTexto = "Regular";
-    else prediccionTexto = "Malo";
-
     return {
         diaSemana: fecha.toLocaleDateString('es-EC', { weekday: 'long', timeZone: 'America/Guayaquil' }),
         fecha: fecha.toLocaleDateString('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }),
-        prediccion: prediccionTexto,
+        prediccion: convertirPuntajeATexto(puntaje),
         razon: razonPrincipal,
         confianza: Math.round(75 + (puntaje / 4)),
         temperatura: Math.round(temp),
@@ -146,9 +197,16 @@ const calcularPronosticoDia = (datosDia, fecha) => {
     };
 };
 
-// FUNCIÓN PRINCIPAL DE LÓGICA
+// =================================================================
+// SECCIÓN 3: ORQUESTADOR PRINCIPAL
+// =================================================================
+
 export const actualizarDatosClima = async () => {
-    console.info(`[${new Date().toISOString()}] ==> Ejecutando tarea: Actualizando datos...`);
+    // MEJORA: Timestamp único para la ejecución
+    const ahora = new Date();
+    const ahoraISO = ahora.toISOString();
+    
+    console.info(`[${ahoraISO}] ==> Ejecutando tarea: Actualizando datos...`);
     
     const { latitud, longitud, accuweatherLocationKey, apiKeys } = config;
     const urls = [
@@ -158,17 +216,18 @@ export const actualizarDatosClima = async () => {
     ];
 
     const resultados = await Promise.allSettled(urls.map(url => axios.get(url)));
+    
     const datosOpenMeteo = resultados[0].status === 'fulfilled' ? adaptarOpenMeteo(resultados[0].value.data) : null;
     const datosOpenWeather = resultados[1].status === 'fulfilled' ? adaptarOpenWeather(resultados[1].value.data) : null;
     const datosAccuweather = resultados[2].status === 'fulfilled' ? adaptarAccuweather(resultados[2].value.data) : null;
 
     if (!datosOpenMeteo) {
-        console.error(`[${new Date().toISOString()}] ==> ERROR CRÍTICO: La fuente principal (Open-Meteo) falló.`);
+        console.error(`[${ahoraISO}] ==> ERROR CRÍTICO: La fuente principal (Open-Meteo) falló.`);
         return;
     }
 
     const normalizedData = combinarDatosAdaptados(datosOpenMeteo, datosOpenWeather, datosAccuweather);
-    const hoyString = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+    const hoyString = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
     
     const resultadoFinal = Object.keys(normalizedData)
         .sort()
@@ -180,14 +239,14 @@ export const actualizarDatosClima = async () => {
         .filter(Boolean);
 
     const pronosticoCompleto = {
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: ahoraISO,
         forecast: resultadoFinal.slice(0, 7)
     };
 
     try {
         await fs.writeFile(config.pronosticoFilePath, JSON.stringify(pronosticoCompleto, null, 2));
-        console.info(`[${new Date().toISOString()}] ==> Tarea finalizada: Archivo pronostico.json actualizado.`);
+        console.info(`[${ahoraISO}] ==> Tarea finalizada: Archivo pronostico.json actualizado.`);
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] ==> ERROR al escribir el archivo: ${error.message}`);
+        console.error(`[${ahoraISO}] ==> ERROR al escribir el archivo: ${error.message}`);
     }
 };
