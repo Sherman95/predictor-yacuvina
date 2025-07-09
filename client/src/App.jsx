@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
 
-// Importando los nuevos componentes
+// --- IMPORTANDO COMPONENTES ---
 import Header from './components/Header';
 import InfoSection from './components/InfoSection';
-import MejorDiaBanner from './components/MejorDiaBanner';
-import PronosticoCard from './components/PronosticoCard';
+import PronosticoSection from './components/PronosticoSection';
+import Footer from './components/Footer';
 
-// Las imágenes se quedan aquí por ahora
+// Imágenes y otras secciones estáticas
 import imagen1 from './assets/yacuvina1.jpg';
 import imagen2 from './assets/yacuvina2.jpg';
 import imagen3 from './assets/yacuvina3.jpg';
@@ -16,45 +16,39 @@ const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
 
 
 function App() {
-  // --- ESTADO ---
+  // --- TODA LA LÓGICA Y ESTADO VUELVEN AL COMPONENTE PADRE ---
   const [pronostico, setPronostico] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [actualizado, setActualizado] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [imagenSeleccionada, setImagenSeleccionada] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false); // Estado para la actualización sutil
 
-  // --- LÓGICA ---
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
     const fetchPronostico = () => {
-      // No usamos el 'cargando' principal para las actualizaciones, solo el de refrescar
       if (!cargando) {
         setIsRefreshing(true);
       }
-
       fetch(`${apiUrl}/api/prediccion`)
         .then(res => {
-          if (!res.ok) throw new Error('No se pudo obtener la respuesta del servidor');
+          if (!res.ok) throw new Error('No se pudo cargar el pronóstico.');
           return res.json();
         })
         .then(data => {
-          setPronostico(data.forecast);
+          setPronostico(data.forecast || []);
           setActualizado(new Date(data.lastUpdated));
         })
         .catch(err => setError(err.message))
         .finally(() => {
-          // Nos aseguramos de que ambos estados de carga terminen
           setCargando(false);
           setIsRefreshing(false);
         });
     };
-
-    fetchPronostico(); // Primera carga
-    const intervalId = setInterval(fetchPronostico, 3600 * 1000); // Refrescar cada hora
+    fetchPronostico();
+    const intervalId = setInterval(fetchPronostico, 3600 * 1000);
     return () => clearInterval(intervalId);
-  }, []); // El array vacío asegura que se configure solo una vez
+  }, [cargando]);
 
   const mejorDia = useMemo(() => {
     if (!pronostico || pronostico.length === 0) return null;
@@ -67,32 +61,33 @@ function App() {
     return null;
   }, [pronostico]);
 
-  // --- RENDERIZADO ---
-  if (cargando) return <div className="loading">Cargando pronóstico...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
-
   return (
     <div className="app-container">
-      {/* Visor de imágenes */}
+      {/* ===== INICIO DEL BLOQUE CORREGIDO ===== */}
       {imagenSeleccionada && (
         <div className="visor-overlay" onClick={() => setImagenSeleccionada(null)}>
-          <button className="visor-cerrar">×</button>
-          <img src={imagenSeleccionada} alt="Visor de imagen" className="visor-imagen" onClick={(e) => e.stopPropagation()} />
+          <button className="visor-cerrar" onClick={() => setImagenSeleccionada(null)}>×</button>
+          <img 
+            src={imagenSeleccionada} 
+            alt="Visor de imagen" 
+            className="visor-imagen"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
+      {/* ===== FIN DEL BLOQUE CORREGIDO ===== */}
       
-      {/* Composición de la UI con los nuevos componentes y props */}
       <Header actualizado={actualizado} isRefreshing={isRefreshing} />
       <InfoSection />
-      <MejorDiaBanner mejorDia={mejorDia} />
+      
+      <PronosticoSection 
+        cargando={cargando}
+        error={error}
+        pronostico={pronostico}
+        mejorDia={mejorDia}
+      />
 
-      <div className="pronostico-grid">
-        {pronostico.map((dia, index) => (
-          <PronosticoCard key={dia.fecha || index} dia={dia} /> // Usamos una key más estable
-        ))}
-      </div>
-
-      {/* Secciones Estáticas */}
+      {/* Aquí puedes seguir componentizando las secciones estáticas si quieres */}
       <section className="actividades-container">
         <h2>Actividades Destacadas</h2>
         <ul>
@@ -106,14 +101,18 @@ function App() {
         <h2>Galería de Yacuviña</h2>
         <div className="galeria-grid">
           {imagenesYacuvina.map((url, index) => (
-            <img key={index} src={url} alt={`Imagen de Yacuviña ${index + 1}`} className="galeria-img" onClick={() => setImagenSeleccionada(url)} />
+            <img 
+              key={index} 
+              src={url} 
+              alt={`Imagen de Yacuviña ${index + 1}`} 
+              className="galeria-img"
+              onClick={() => setImagenSeleccionada(url)} 
+            />
           ))}
         </div>
       </section>
 
-      <footer className="footer">
-        {/* Aquí puedes añadir tu componente Footer si lo creas */}
-      </footer>
+      <Footer />
     </div>
   );
 }

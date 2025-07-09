@@ -1,32 +1,12 @@
 {
-  "lastUpdated": "2025-07-08T03:00:00.948Z",
+  "lastUpdated": "2025-07-09T15:13:31.128Z",
   "forecast": [
-    {
-      "diaSemana": "lunes",
-      "fecha": "7 de julio",
-      "prediccion": "Excelente",
-      "razon": "Buenas condiciones para mar de nubes.",
-      "confianza": 97,
-      "temperatura": 17,
-      "icono": "03d",
-      "horaAtardecer": "06:22 p. m."
-    },
-    {
-      "diaSemana": "martes",
-      "fecha": "8 de julio",
-      "prediccion": "Bueno",
-      "razon": "Buenas condiciones para mar de nubes.",
-      "confianza": 94,
-      "temperatura": 17,
-      "icono": "03d",
-      "horaAtardecer": "06:22 p. m."
-    },
     {
       "diaSemana": "miércoles",
       "fecha": "9 de julio",
-      "prediccion": "Bueno",
+      "prediccion": "Regular",
       "razon": "Buenas condiciones para mar de nubes.",
-      "confianza": 95,
+      "confianza": 93,
       "temperatura": 17,
       "icono": "03d",
       "horaAtardecer": "06:22 p. m."
@@ -36,7 +16,7 @@
       "fecha": "10 de julio",
       "prediccion": "Bueno",
       "razon": "Buenas condiciones para mar de nubes.",
-      "confianza": 96,
+      "confianza": 97,
       "temperatura": 17,
       "icono": "03d",
       "horaAtardecer": "06:23 p. m."
@@ -56,14 +36,34 @@
       "fecha": "12 de julio",
       "prediccion": "Bueno",
       "razon": "Buenas condiciones para mar de nubes.",
-      "confianza": 94,
-      "temperatura": 17,
+      "confianza": 96,
+      "temperatura": 16,
       "icono": "03d",
       "horaAtardecer": "06:23 p. m."
     },
     {
       "diaSemana": "domingo",
       "fecha": "13 de julio",
+      "prediccion": "Regular",
+      "razon": "Buenas condiciones para mar de nubes.",
+      "confianza": 94,
+      "temperatura": 18,
+      "icono": "03d",
+      "horaAtardecer": "06:23 p. m."
+    },
+    {
+      "diaSemana": "lunes",
+      "fecha": "14 de julio",
+      "prediccion": "Excelente",
+      "razon": "Buenas condiciones para mar de nubes.",
+      "confianza": 99,
+      "temperatura": 18,
+      "icono": "03d",
+      "horaAtardecer": "06:23 p. m."
+    },
+    {
+      "diaSemana": "martes",
+      "fecha": "15 de julio",
       "prediccion": "Bueno",
       "razon": "Buenas condiciones para mar de nubes.",
       "confianza": 97,
