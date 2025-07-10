@@ -1,12 +1,12 @@
 {
-  "lastUpdated": "2025-07-09T23:28:06.309Z",
+  "lastUpdated": "2025-07-10T02:37:44.879Z",
   "forecast": [
     {
       "diaSemana": "miércoles",
       "fecha": "9 de julio",
-      "prediccion": "Regular",
-      "razon": "Buenas condiciones para mar de nubes.",
-      "confianza": 93,
+      "prediccion": "Malo",
+      "razon": "El cielo se está nublando rápidamente.",
+      "confianza": 89,
       "temperatura": 17,
       "icono": "03d",
       "horaAtardecer": "06:22 p. m."

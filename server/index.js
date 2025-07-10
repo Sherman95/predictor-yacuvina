@@ -25,7 +25,7 @@ app.listen(config.port, () => {
     actualizarDatosClima();
 
     // Programa la tarea para cada hora.
-    cron.schedule('0 * * * *', actualizarDatosClima);
+    cron.schedule('0/30 * * * *', actualizarDatosClima);
     
     console.log("🕒 Tarea de actualización de clima programada para ejecutarse cada hora.");
 });
