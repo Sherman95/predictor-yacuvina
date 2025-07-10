@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { config } from '../config/index.js';
 
 // =================================================================
-// SECCIÓN 1: ADAPTADORES DE API
+// SECCIÓN 1: ADAPTADORES DE API (Sin cambios)
 // =================================================================
 
 const adaptarOpenMeteo = (data) => {
@@ -85,7 +85,7 @@ const combinarDatosAdaptados = (...fuentes) => {
 
 
 // =================================================================
-// SECCIÓN 2: LÓGICA DE PUNTUACIÓN (REFACTORIZADA)
+// SECCIÓN 2: LÓGICA DE PUNTUACIÓN (Sin cambios en su lógica interna)
 // =================================================================
 
 const calcularScoreMarDeNubes = (nubesBajas, nubesSuperiores) => {
@@ -118,8 +118,8 @@ const calcularPronosticoDia = (datosDia, fecha) => {
     const pronosticoTarde = datosDia.horas[horaCercana];
     if (!pronosticoTarde) return null;
 
-    // 1. Extraer y promediar datos
     const { visibilidad, temp, techo_nubes } = pronosticoTarde;
+    
     const fuentesLluvia = [];
     if (pronosticoTarde.lluvia_om !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_om);
     if (pronosticoTarde.lluvia_ow !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_ow);
@@ -135,13 +135,11 @@ const calcularPronosticoDia = (datosDia, fecha) => {
     let puntaje;
     let razonPrincipal = "";
 
-    // 2. REGLA DE ANULACIÓN: Penalización por cielo completamente tapado (Overcast)
     const nubesSuperiores = (nubes.scoreNubesMedias + nubes.scoreNubesAltas) / 2;
     if (nubes.scoreNubesBajas > 70 && nubesSuperiores > 50) {
         puntaje = 30;
         razonPrincipal = "Cielo completamente cubierto, sin visibilidad.";
     } else {
-        // 3. Si no está tapado, calcular y elegir el mejor escenario
         const scoreMarDeNubes = calcularScoreMarDeNubes(nubes.scoreNubesBajas, nubesSuperiores);
         const scoreCieloIncendiado = calcularScoreCieloIncendiado(nubes.scoreNubesBajas, nubes.scoreNubesMedias, nubes.scoreNubesAltas);
 
@@ -154,7 +152,6 @@ const calcularPronosticoDia = (datosDia, fecha) => {
         }
     }
     
-    // 4. Aplicar bonus y penalizaciones finales
     const altitudMirador = 2300;
     if (typeof techo_nubes === 'number' && techo_nubes < altitudMirador && techo_nubes > 0) {
         puntaje += 15;
@@ -166,20 +163,18 @@ const calcularPronosticoDia = (datosDia, fecha) => {
         razonPrincipal = "Posible neblina en el sitio.";
     }
     
-    // 5. NUEVO: Penalización por Tendencia Negativa
     const pronosticoHoraPrevia2 = datosDia.horas[horaCercana - 2];
     if(pronosticoHoraPrevia2) {
         const nubesAhoraTotal = nubes.scoreNubesBajas + nubes.scoreNubesMedias + nubes.scoreNubesAltas;
         const nubesAntesTotal = (pronosticoHoraPrevia2.nubes_bajas ?? 0) + (pronosticoHoraPrevia2.nubes_medias ?? 0) + (pronosticoHoraPrevia2.nubes_altas ?? 0);
         if (nubesAhoraTotal > nubesAntesTotal + 30) {
-            puntaje -= 15; // Penalización por empeoramiento rápido
+            puntaje -= 15;
             razonPrincipal = "El cielo se está nublando rápidamente.";
         }
     }
 
     puntaje = Math.max(0, Math.min(100, puntaje));
 
-    // La penalización por lluvia es el juez final
     if (promedioLluvia >= 30 && puntaje >= 75) {
         puntaje = 74;
         razonPrincipal = `Alto riesgo de lluvia (${Math.round(promedioLluvia)}%).`;
@@ -202,7 +197,7 @@ const calcularPronosticoDia = (datosDia, fecha) => {
 };
 
 // =================================================================
-// SECCIÓN 3: ORQUESTADOR PRINCIPAL (CON DEPURACIÓN AÑADIDA)
+// SECCIÓN 3: ORQUESTADOR PRINCIPAL
 // =================================================================
 
 export const actualizarDatosClima = async () => {
@@ -211,62 +206,48 @@ export const actualizarDatosClima = async () => {
     
     console.info(`[${ahoraISO}] ==> Ejecutando tarea: Actualizando datos...`);
     
+    const { latitud, longitud, accuweatherLocationKey, apiKeys } = config;
+    const urls = [
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitud}&longitude=${longitud}&hourly=temperature_2m,precipitation_probability,cloudcover_low,cloudcover_mid,cloudcover_high,visibility&timezone=America/Guayaquil`,
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${latitud}&lon=${longitud}&appid=${apiKeys.openWeather}&units=metric`,
+        `http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/${accuweatherLocationKey}?apikey=${apiKeys.accuweather}&details=true&metric=true`
+    ];
+
+    const resultados = await Promise.allSettled(urls.map(url => axios.get(url)));
+    
+    const datosOpenMeteo = resultados[0].status === 'fulfilled' ? adaptarOpenMeteo(resultados[0].value.data) : null;
+    const datosOpenWeather = resultados[1].status === 'fulfilled' ? adaptarOpenWeather(resultados[1].value.data) : null;
+    const datosAccuweather = resultados[2].status === 'fulfilled' ? adaptarAccuweather(resultados[2].value.data) : null;
+
+    if (!datosOpenMeteo) {
+        console.error(`[${ahoraISO}] ==> ERROR CRÍTICO: La fuente principal (Open-Meteo) falló.`);
+        return;
+    }
+
+    const normalizedData = combinarDatosAdaptados(datosOpenMeteo, datosOpenWeather, datosAccuweather);
+    const hoyString = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
+    
+    const resultadoFinal = Object.keys(normalizedData)
+        .sort()
+        .filter(dateString => dateString >= hoyString)
+        .map(dateString => {
+            // ===== AQUÍ ESTÁ LA CORRECCIÓN CLAVE =====
+            // Creamos la fecha de forma explícita para la zona horaria de Ecuador,
+            // asegurando que SunCalc siempre reciba el día correcto.
+            const fecha = new Date(`${dateString}T18:00:00-05:00`);
+            return calcularPronosticoDia(normalizedData[dateString], fecha);
+        })
+        .filter(Boolean);
+
+    const pronosticoCompleto = {
+        lastUpdated: ahoraISO,
+        forecast: resultadoFinal.slice(0, 7)
+    };
+
     try {
-        const { latitud, longitud, accuweatherLocationKey, apiKeys } = config;
-        const urls = [
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitud}&longitude=${longitud}&hourly=temperature_2m,precipitation_probability,cloudcover_low,cloudcover_mid,cloudcover_high,visibility&timezone=America/Guayaquil`,
-            `https://api.openweathermap.org/data/2.5/forecast?lat=${latitud}&lon=${longitud}&appid=${apiKeys.openWeather}&units=metric`,
-            `http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/${accuweatherLocationKey}?apikey=${apiKeys.accuweather}&details=true&metric=true`
-        ];
-
-        const resultados = await Promise.allSettled(urls.map(url => axios.get(url)));
-        
-        // ===== INICIO DEL BLOQUE DE DEPURACIÓN =====
-        console.log('--- Estado de las llamadas a las APIs ---');
-        console.log(`Open-Meteo: ${resultados[0].status}`);
-        console.log(`OpenWeather: ${resultados[1].status}`);
-        console.log(`AccuWeather: ${resultados[2].status}`);
-        
-        if (resultados[1].status === 'rejected') {
-            console.error('Error en OpenWeather:', resultados[1].reason.message);
-        }
-        if (resultados[2].status === 'rejected') {
-            console.error('Error en AccuWeather:', resultados[2].reason.message);
-        }
-        console.log('------------------------------------');
-        // ===== FIN DEL BLOQUE DE DEPURACIÓN =====
-        
-        const datosOpenMeteo = resultados[0].status === 'fulfilled' ? adaptarOpenMeteo(resultados[0].value.data) : null;
-        const datosOpenWeather = resultados[1].status === 'fulfilled' ? adaptarOpenWeather(resultados[1].value.data) : null;
-        const datosAccuweather = resultados[2].status === 'fulfilled' ? adaptarAccuweather(resultados[2].value.data) : null;
-
-        if (!datosOpenMeteo) {
-            console.error(`[${ahoraISO}] ==> ERROR CRÍTICO: La fuente principal (Open-Meteo) falló.`);
-            return;
-        }
-
-        const normalizedData = combinarDatosAdaptados(datosOpenMeteo, datosOpenWeather, datosAccuweather);
-        const hoyString = ahora.toLocaleDateString('en-CA', { timeZone: 'America/Guayaquil' });
-        
-        const resultadoFinal = Object.keys(normalizedData)
-            .sort()
-            .filter(dateString => dateString >= hoyString)
-            .map(dateString => {
-                const fecha = new Date(dateString + 'T12:00:00Z');
-                return calcularPronosticoDia(normalizedData[dateString], fecha);
-            })
-            .filter(Boolean);
-
-        const pronosticoCompleto = {
-            lastUpdated: ahoraISO,
-            forecast: resultadoFinal.slice(0, 7)
-        };
-
         await fs.writeFile(config.pronosticoFilePath, JSON.stringify(pronosticoCompleto, null, 2));
         console.info(`[${ahoraISO}] ==> Tarea finalizada: Archivo pronostico.json actualizado.`);
-
     } catch (error) {
-        // Este catch ahora atrapará cualquier error que ocurra en el proceso
-        console.error(`[${ahoraISO}] ==> ERROR en la tarea programada: ${error.message}`);
+        console.error(`[${ahoraISO}] ==> ERROR al escribir el archivo: ${error.message}`);
     }
 };
