@@ -43,47 +43,55 @@ WEATHERAPI_KEY=26b46f51e4d44c3e93505637250207
 
 ## 🚀 **PASO 2: DEPLOY EN VERCEL (Frontend)**
 
-### **Opción 1: Desde la Web (RECOMENDADO)**
-1. Ve a [vercel.com](https://vercel.com) y conecta tu GitHub
-2. Importa el repositorio `Sherman95/predictor-yacuvina`
-3. **IMPORTANTE**: Cambia la configuración:
-   - **Root Directory**: `client` (⚠️ MUY IMPORTANTE)
-   - **Framework Preset**: Vite
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Install Command**: `npm install`
+## 🚀 **PASO 2: DEPLOY EN VERCEL (Frontend)**
 
-### **Opción 2: Desde CLI**
+### **🏆 OPCIÓN RECOMENDADA: Configuración Manual (Dashboard)**
+
+**⭐ Esta es la mejor opción para tu proyecto**
+
+#### **Pasos Detallados:**
+1. Ve a [vercel.com](https://vercel.com) y **Sign in with GitHub**
+2. Click **"Add New Project"**
+3. Busca y selecciona `Sherman95/predictor-yacuvina`
+4. **ANTES de hacer deploy**, click **"Configure Project"**
+5. **CONFIGURACIÓN CRÍTICA** (⚠️ MUY IMPORTANTE):
+   ```
+   Framework Preset: Vite
+   Root Directory: client
+   Build Command: npm run build
+   Output Directory: dist
+   Install Command: npm install
+   ```
+6. **Environment Variables** → Add:
+   ```
+   VITE_API_URL = https://predictor-yacuvina-api.onrender.com
+   ```
+7. Click **"Deploy"**
+
+#### **✅ Ventajas de esta opción:**
+- ✅ Control total de la configuración
+- ✅ Logs detallados si hay errores
+- ✅ Fácil modificar configuración después
+- ✅ Funciona perfecto con monorepos
+- ✅ Redeploy automático desde GitHub
+
+---
+
+### **🔧 Alternativa 2: CLI (Solo si falla la primera)**
 ```bash
-# Instalar Vercel CLI
+# Solo usar si la opción 1 no funciona
 npm i -g vercel
-
-# Deploy desde el directorio client (IMPORTANTE)
 cd client
 vercel --prod
-
-# O alternativamente desde la raíz:
-vercel --prod --cwd client
 ```
 
-### **Variables de Entorno en Vercel Dashboard:**
+### **⚠️ Alternativa 3: Eliminar y Recrear**
 ```bash
-VITE_API_URL=https://predictor-yacuvina-api.onrender.com
+# Solo como último recurso
+1. Eliminar proyecto en Vercel Dashboard
+2. Reimportar desde GitHub
+3. Usar configuración manual (Opción 1)
 ```
-
-### **⚠️ SOLUCIÓN A ERROR COMÚN:**
-Si obtienes error `Command "cd client && npm install" exited with 1`:
-
-1. **En Vercel Dashboard → Project Settings:**
-   - Root Directory: `client`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
-
-2. **O usar configuración manual:**
-   - Framework: Vite
-   - Root Directory: `client`
-   - Deploy desde el subdirectorio client
 
 ---
 
@@ -113,26 +121,43 @@ fetch('https://predictor-yacuvina-api.onrender.com/api/prediccion')
 
 ---
 
-## 🔍 **TROUBLESHOOTING COMÚN:**
+## 🔍 **TROUBLESHOOTING - ORDEN DE SOLUCIONES:**
 
-### **❌ Error CORS:**
+### **❌ Problema #1: Build Failed en Vercel**
 ```
-Access to fetch at 'https://predictor-yacuvina-api.onrender.com' 
-from origin 'https://predictor-yacuvina.vercel.app' has been blocked by CORS
+Command "cd client && npm install" exited with 1
 ```
-**Solución**: Verificar que el dominio de Vercel esté en la configuración CORS del servidor.
+**🎯 Solución (en orden):**
+1. **Verificar Root Directory**: Debe ser `client` (no vacío)
+2. **Verificar Build Command**: Debe ser `npm run build` (no `npm run vercel-build`)
+3. **Reinstalar terser**: Tu package.json ya lo tiene, pero puede fallar en Vercel
+4. **Usar configuración manual** (Opción 1 recomendada)
 
-### **❌ API Endpoints 404:**
+### **❌ Problema #2: Error CORS en Frontend**
 ```
-Cannot GET /api/prediccion
+Access to fetch blocked by CORS policy
 ```
-**Solución**: Verificar que el servidor en Render esté corriendo correctamente.
+**🎯 Solución:**
+Tu servidor ya tiene CORS configurado para Vercel. Verificar que:
+- Backend esté funcionando en Render
+- Frontend use la URL correcta: `https://predictor-yacuvina-api.onrender.com`
 
-### **❌ Variables de Entorno:**
+### **❌ Problema #3: Variables de Entorno**
 ```
-TypeError: Cannot read properties of undefined
+import.meta.env.VITE_API_URL is undefined
 ```
-**Solución**: Verificar que todas las variables estén configuradas en ambas plataformas.
+**🎯 Solución:**
+En Vercel Dashboard → Project → Settings → Environment Variables:
+```
+VITE_API_URL = https://predictor-yacuvina-api.onrender.com
+```
+
+### **❌ Problema #4: 404 en API Endpoints**
+**🎯 Verificar que el backend esté funcionando:**
+```bash
+curl https://predictor-yacuvina-api.onrender.com/api/prediccion
+# Debería devolver JSON con pronósticos
+```
 
 ---
 
@@ -175,10 +200,30 @@ curl https://predictor-yacuvina-api.onrender.com/api/debug/environment
 
 ## 🎯 **RESULTADO ESPERADO:**
 
-✅ **Backend en Render**: API funcionando con algoritmo Yacuviña 3.0  
-✅ **Frontend en Vercel**: Interfaz moderna y responsiva  
-✅ **Conexión**: Frontend consume API del backend sin errores  
-✅ **CORS**: Configurado correctamente para producción  
-✅ **Variables**: Todas las API keys funcionando  
+### **✅ URLs Finales:**
+- **Frontend**: `https://predictor-yacuvina.vercel.app`
+- **Backend**: `https://predictor-yacuvina-api.onrender.com`
 
-**¡Tu aplicación estará disponible 24/7 en la nube!** 🌤️
+### **✅ Verificación Completa:**
+```bash
+# 1. Verificar backend
+curl https://predictor-yacuvina-api.onrender.com/api/prediccion
+
+# 2. Verificar frontend (abrir en navegador)
+https://predictor-yacuvina.vercel.app
+
+# 3. Verificar conexión (en DevTools del frontend)
+fetch('https://predictor-yacuvina-api.onrender.com/api/prediccion')
+  .then(res => res.json())
+  .then(data => console.log('✅ Algoritmo Yacuviña 3.0:', data))
+```
+
+### **🚀 Funcionalidades que deben funcionar:**
+✅ **Pronósticos de 7 días** con Algoritmo Yacuviña 3.0  
+✅ **Clima actual** en tiempo real  
+✅ **Tipos de atardecer**: Mar de Nubes vs Despejado  
+✅ **Cards expandibles** con detalles meteorológicos  
+✅ **Responsive design** para móviles  
+✅ **Mejor día recomendado** destacado  
+
+**¡Tu aplicación estará disponible 24/7 en la nube con el Algoritmo Yacuviña 3.0!** 🌤️⛰️
