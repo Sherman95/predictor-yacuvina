@@ -1,0 +1,11 @@
+{
+  "name": "predictor-yacuvina-frontend",
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "env": {
+    "VITE_API_URL": "https://predictor-yacuvina-api.onrender.com"
+  }
+}

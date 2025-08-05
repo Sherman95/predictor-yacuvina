@@ -43,29 +43,47 @@ WEATHERAPI_KEY=26b46f51e4d44c3e93505637250207
 
 ## 🚀 **PASO 2: DEPLOY EN VERCEL (Frontend)**
 
-### **Opción 1: Desde la Web**
+### **Opción 1: Desde la Web (RECOMENDADO)**
 1. Ve a [vercel.com](https://vercel.com) y conecta tu GitHub
 2. Importa el repositorio `Sherman95/predictor-yacuvina`
-3. Configura:
+3. **IMPORTANTE**: Cambia la configuración:
+   - **Root Directory**: `client` (⚠️ MUY IMPORTANTE)
    - **Framework Preset**: Vite
-   - **Root Directory**: `client`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
+   - **Install Command**: `npm install`
 
 ### **Opción 2: Desde CLI**
 ```bash
 # Instalar Vercel CLI
 npm i -g vercel
 
-# Deploy desde el directorio client
+# Deploy desde el directorio client (IMPORTANTE)
 cd client
 vercel --prod
+
+# O alternativamente desde la raíz:
+vercel --prod --cwd client
 ```
 
-### **Variables de Entorno en Vercel:**
+### **Variables de Entorno en Vercel Dashboard:**
 ```bash
 VITE_API_URL=https://predictor-yacuvina-api.onrender.com
 ```
+
+### **⚠️ SOLUCIÓN A ERROR COMÚN:**
+Si obtienes error `Command "cd client && npm install" exited with 1`:
+
+1. **En Vercel Dashboard → Project Settings:**
+   - Root Directory: `client`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+2. **O usar configuración manual:**
+   - Framework: Vite
+   - Root Directory: `client`
+   - Deploy desde el subdirectorio client
 
 ---
 
