@@ -4,6 +4,8 @@ import cron from 'node-cron';
 import { config } from './config/index.js';
 import { actualizarDatosClima } from './services/weatherService.js';
 import predictionRoutes from './routes/predictionRoutes.js';
+import validationRoutes from './routes/validationRoutes.js';
+import currentWeatherRoutes from './routes/currentWeatherRoutes.js';
 
 // --- VALIDACIÓN DE APIS ---
 if (!config.apiKeys.openWeather || !config.apiKeys.accuweather) {
@@ -16,10 +18,13 @@ app.use(cors());
 
 // --- RUTAS ---
 app.use('/api/prediccion', predictionRoutes);
+app.use('/api/validacion', validationRoutes);
+app.use('/api', currentWeatherRoutes); // 🌤️ Nueva ruta para clima actual
 
 // --- INICIO DEL SERVIDOR Y TAREAS PROGRAMADAS ---
 app.listen(config.port, () => {
     console.log(`✅ Servidor corriendo en el puerto ${config.port}`);
+    console.log(`🌤️ Clima actual disponible en: http://localhost:${config.port}/api/current-weather`);
     
     // Ejecuta la actualización una vez al iniciar.
     actualizarDatosClima();

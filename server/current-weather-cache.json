@@ -1,0 +1,47 @@
+{
+  "data": {
+    "temperatura": 12,
+    "sensacionTermica": 12,
+    "humedad": 90,
+    "presion": 1017,
+    "visibilidad": 10,
+    "velocidadViento": 4,
+    "direccionViento": 98,
+    "direccionVientoTexto": "E",
+    "nubosidad": 39,
+    "condicionPrincipal": "Clouds",
+    "descripcion": "nubes dispersas",
+    "icono": "03n",
+    "coordenadas": {
+      "lat": -3.5729,
+      "lon": -79.6893
+    },
+    "nombreLugar": "Zarumaurcu",
+    "pais": "EC",
+    "zonaHoraria": -18000,
+    "fuente": "OpenWeatherMap",
+    "timestamp": 1754369304000,
+    "fechaLocal": "4 ago 2025, 11:48 p. m.",
+    "api": "OpenWeatherMap",
+    "evaluacionYacuvina": {
+      "puntuacion": 75,
+      "categoria": "Bueno",
+      "factoresPositivos": [
+        "Temperatura ideal (12°C)",
+        "Excelente visibilidad (10 km)",
+        "Pocas nubes (39%)",
+        "Viento suave (4 km/h)"
+      ],
+      "factoresNegativos": [
+        "Humedad alta (90%)"
+      ],
+      "recomendacion": "Muy buenas condiciones para el atardecer.",
+      "colorIndicador": "#8BC34A"
+    },
+    "esCache": false,
+    "ultimaActualizacion": "2025-08-05T04:48:24.435Z",
+    "proximaActualizacion": "12:48 a. m."
+  },
+  "timestamp": 1754369304869,
+  "lastUpdate": "2025-08-05T04:48:24.869Z"
+}

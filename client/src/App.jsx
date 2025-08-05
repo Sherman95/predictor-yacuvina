@@ -4,6 +4,7 @@ import './App.css';
 // --- IMPORTANDO COMPONENTES ---
 import Header from './components/Header';
 import InfoSection from './components/InfoSection';
+import ClimaActual from './components/ClimaActual';
 import PronosticoSection from './components/PronosticoSection';
 import Footer from './components/Footer';
 
@@ -52,12 +53,32 @@ function App() {
 
   const mejorDia = useMemo(() => {
     if (!pronostico || pronostico.length === 0) return null;
+    
+    // Buscar el día con mayor puntaje numérico (nuevo algoritmo Yacuviña 3.0)
+    let mejorDiaEncontrado = null;
+    let mejorPuntaje = -1;
+    
+    pronostico.forEach(dia => {
+      // Priorizar días con puntaje numérico si está disponible
+      if (dia.puntajeNumerico !== undefined && dia.puntajeNumerico > mejorPuntaje) {
+        mejorPuntaje = dia.puntajeNumerico;
+        mejorDiaEncontrado = dia;
+      }
+    });
+    
+    // Si encontramos un día con puntaje numérico, devolverlo
+    if (mejorDiaEncontrado && mejorPuntaje >= 50) {
+      return mejorDiaEncontrado;
+    }
+    
+    // Fallback al método anterior si no hay puntajes numéricos
     const ideal = pronostico.find(d => d.prediccion.includes("Ideal") || d.prediccion.includes("Perfecto"));
     if (ideal) return ideal;
     const excelente = pronostico.find(d => d.prediccion === "Excelente");
     if (excelente) return excelente;
     const bueno = pronostico.find(d => d.prediccion === "Bueno");
     if (bueno) return bueno;
+    
     return null;
   }, [pronostico]);
 
@@ -79,6 +100,9 @@ function App() {
       
       <Header actualizado={actualizado} isRefreshing={isRefreshing} />
       <InfoSection />
+      
+      {/* 🌤️ CLIMA ACTUAL DE YACUVIÑA */}
+      <ClimaActual />
       
       <PronosticoSection 
         cargando={cargando}

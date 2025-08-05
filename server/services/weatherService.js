@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import { config } from '../config/index.js';
 
 // =================================================================
-// SECCIÓN 1: ADAPTADORES DE API (Sin cambios)
+// SECCIÓN 1: ADAPTADORES DE API
 // =================================================================
 
 const adaptarOpenMeteo = (data) => {
@@ -25,6 +25,10 @@ const adaptarOpenMeteo = (data) => {
             lluvia_om: data.hourly.precipitation_probability[index],
             visibilidad: data.hourly.visibility[index] / 1000,
             temp: data.hourly.temperature_2m[index],
+            humedad: data.hourly.relativehumidity_2m[index],
+            viento: data.hourly.windspeed_10m?.[index] || 0, // Velocidad del viento
+            uv_index: data.hourly.uv_index?.[index] || 0, // Índice UV
+            presion: data.hourly.surface_pressure?.[index] || 0, // Presión atmosférica
         };
     });
     return datosAdaptados;
@@ -85,25 +89,181 @@ const combinarDatosAdaptados = (...fuentes) => {
 
 
 // =================================================================
-// SECCIÓN 2: LÓGICA DE PUNTUACIÓN (Sin cambios en su lógica interna)
+// SECCIÓN 2: ALGORITMO YACUVIÑA 3.0 - MAR DE NUBES ESPECÍFICO
 // =================================================================
 
-const calcularScoreMarDeNubes = (nubesBajas, nubesSuperiores) => {
-    return (nubesBajas / 100) * 60 + ((100 - nubesSuperiores) / 100) * 40;
+// ALGORITMO 1: MAR DE NUBES CLÁSICO (Mirador 2300-2600msnm viendo hacia abajo)
+const calcularScoreMarDeNubes = (datos) => {
+    const { nubes_bajas, nubes_medias, nubes_altas, visibilidad, viento, temp, humedad } = datos;
+    
+    let score = 0;
+    let factores = [];
+    
+    // Factor 1: NUBES BAJAS DENSAS (50% del score) - Forman el "mar" abajo
+    if (nubes_bajas >= 80) {
+        score += 50;
+        factores.push("Mar de nubes denso y espectacular");
+    } else if (nubes_bajas >= 60) {
+        score += 35;
+        factores.push("Mar de nubes bueno");
+    } else if (nubes_bajas >= 40) {
+        score += 20;
+        factores.push("Mar de nubes parcial");
+    } else {
+        score += 5;
+        factores.push("Pocas nubes bajas para mar");
+    }
+    
+    // Factor 2: VISIBILIDAD CLARA EN EL MIRADOR (30% del score) - Crítico
+    if (visibilidad >= 10) {
+        score += 30;
+        factores.push("Visibilidad excelente desde el mirador");
+    } else if (visibilidad >= 5) {
+        score += 20;
+        factores.push("Buena visibilidad");
+    } else if (visibilidad >= 3) {
+        score += 10;
+        factores.push("Visibilidad reducida");
+    } else {
+        score -= 20; // Penalización fuerte
+        factores.push("Neblina local impide la vista");
+    }
+    
+    // Factor 3: POCAS NUBES ALTAS (10% del score) - No bloqueen el sol
+    if (nubes_altas <= 30) {
+        score += 10;
+        factores.push("Cielo despejado arriba");
+    } else if (nubes_altas <= 50) {
+        score += 5;
+    } else {
+        score -= 5;
+        factores.push("Nubes altas bloquean el sol");
+    }
+    
+    // Factor 4: TEMPERATURA DE MONTAÑA (5% del score)
+    if (temp >= 14 && temp <= 17) {
+        score += 5;
+        factores.push("Temperatura ideal de montaña");
+    } else if (temp >= 12 && temp <= 19) {
+        score += 3;
+    }
+    
+    // Factor 5: VIENTO SUAVE (5% del score) - Mantiene el mar estable
+    if (viento <= 10) {
+        score += 5;
+        factores.push("Viento suave mantiene el mar estable");
+    } else if (viento <= 20) {
+        score += 2;
+    } else {
+        score -= 5;
+        factores.push("Viento fuerte dispersa las nubes");
+    }
+    
+    return { score: Math.max(0, score), factores, tipo: "Mar de Nubes" };
 };
 
-const calcularScoreCieloIncendiado = (nubesBajas, nubesMedias, nubesAltas) => {
-    const puntajeColor = (nubesAltas * 0.7) + (nubesMedias * 0.3);
-    const puntajeClaridad = (100 - nubesBajas);
-    return (puntajeColor * 0.7) + (puntajeClaridad * 0.3);
+// ALGORITMO 2: ATARDECER DESPEJADO (Vista panorámica del valle)
+const calcularScoreDespejado = (datos) => {
+    const { nubes_bajas, nubes_medias, nubes_altas, visibilidad, viento, temp, uv_index } = datos;
+    
+    let score = 0;
+    let factores = [];
+    
+    // Factor 1: CIELO DESPEJADO (40% del score)
+    const totalNubes = nubes_bajas + nubes_medias + nubes_altas;
+    if (totalNubes <= 30) {
+        score += 40;
+        factores.push("Cielo completamente despejado");
+    } else if (totalNubes <= 50) {
+        score += 30;
+        factores.push("Cielo mayormente despejado");
+    } else if (totalNubes <= 70) {
+        score += 20;
+        factores.push("Cielo parcialmente despejado");
+    } else {
+        score += 10;
+    }
+    
+    // Factor 2: VISIBILIDAD EXCELENTE (35% del score)
+    if (visibilidad >= 15) {
+        score += 35;
+        factores.push("Vista panorámica excepcional del valle");
+    } else if (visibilidad >= 10) {
+        score += 25;
+        factores.push("Excelente vista panorámica");
+    } else if (visibilidad >= 5) {
+        score += 15;
+        factores.push("Buena vista del valle");
+    } else {
+        score -= 10;
+        factores.push("Vista limitada por neblina");
+    }
+    
+    // Factor 3: ÍNDICE UV PARA COLORES (15% del score)
+    if (uv_index >= 4) {
+        score += 15;
+        factores.push("Colores intensos del atardecer");
+    } else if (uv_index >= 2) {
+        score += 10;
+        factores.push("Buenos colores del atardecer");
+    } else if (uv_index >= 1) {
+        score += 5;
+    }
+    
+    // Factor 4: TEMPERATURA IDEAL (5% del score)
+    if (temp >= 14 && temp <= 17) {
+        score += 5;
+        factores.push("Temperatura perfecta");
+    } else if (temp >= 12 && temp <= 19) {
+        score += 3;
+    }
+    
+    // Factor 5: VIENTO MODERADO (5% del score)
+    if (viento >= 5 && viento <= 15) {
+        score += 5;
+        factores.push("Viento ideal para claridad");
+    } else if (viento <= 20) {
+        score += 3;
+    }
+    
+    return { score: Math.max(0, score), factores, tipo: "Atardecer Despejado" };
 };
 
-function convertirPuntajeATexto(puntaje) {
-    if (puntaje >= 88) return "Excelente";
-    if (puntaje >= 75) return "Bueno";
-    if (puntaje >= 60) return "Regular";
-    return "Malo";
-}
+// ALGORITMO 3: DETECTOR DE TIPO DE ATARDECER
+const calcularScoreYacuvina = (datos) => {
+    const { nubes_bajas, nubes_medias, nubes_altas, visibilidad } = datos;
+    
+    // LÓGICA DE DETECCIÓN: Determinar tipo de atardecer esperado
+    
+    // Escenario 1: MAR DE NUBES (nubes bajas densas)
+    if (nubes_bajas >= 60) {
+        return calcularScoreMarDeNubes(datos);
+    }
+    
+    // Escenario 2: DESPEJADO (pocas nubes en general)
+    const totalNubes = nubes_bajas + nubes_medias + nubes_altas;
+    if (totalNubes <= 60 && nubes_bajas <= 30) {
+        return calcularScoreDespejado(datos);
+    }
+    
+    // Escenario 3: CONDICIONES MIXTAS (evaluar ambos y tomar el mejor)
+    const scoreMarDeNubes = calcularScoreMarDeNubes(datos);
+    const scoreDespejado = calcularScoreDespejado(datos);
+    
+    if (scoreMarDeNubes.score > scoreDespejado.score) {
+        return scoreMarDeNubes;
+    } else {
+        return scoreDespejado;
+    }
+};
+
+const convertirPuntajeATexto = (puntaje) => {
+    if (puntaje >= 85) return "Excelente";
+    if (puntaje >= 70) return "Bueno";
+    if (puntaje >= 50) return "Regular";
+    if (puntaje >= 30) return "Malo";
+    return "Muy Malo";
+};
 
 const calcularPronosticoDia = (datosDia, fecha) => {
     if (!datosDia?.horas || Object.keys(datosDia.horas).length === 0) return null;
@@ -112,87 +272,90 @@ const calcularPronosticoDia = (datosDia, fecha) => {
     const horaAtardecerLocal = new Date(sunTimes.sunset).getHours();
     
     const horasDisponibles = Object.keys(datosDia.horas).map(Number);
-    const horaCercana = horasDisponibles.reduce((prev, curr) => 
-        Math.abs(curr - horaAtardecerLocal) < Math.abs(prev - horaAtardecerLocal) ? curr : prev
-    );
+    const horaCercana = horasDisponibles.reduce((prev, curr) => Math.abs(curr - horaAtardecerLocal) < Math.abs(prev - horaAtardecerLocal) ? curr : prev);
     const pronosticoTarde = datosDia.horas[horaCercana];
     if (!pronosticoTarde) return null;
 
-    const { visibilidad, temp, techo_nubes } = pronosticoTarde;
+    const { visibilidad, temp, humedad, icono, viento, uv_index } = pronosticoTarde;
     
+    // Calcular promedio de lluvia de todas las fuentes
     const fuentesLluvia = [];
     if (pronosticoTarde.lluvia_om !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_om);
     if (pronosticoTarde.lluvia_ow !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_ow);
     if (pronosticoTarde.lluvia_aw !== undefined) fuentesLluvia.push(pronosticoTarde.lluvia_aw);
     const promedioLluvia = fuentesLluvia.length > 0 ? fuentesLluvia.reduce((a, b) => a + b, 0) / fuentesLluvia.length : 0;
     
-    const nubes = {
-        scoreNubesBajas: pronosticoTarde.nubes_bajas ?? 0,
-        scoreNubesMedias: pronosticoTarde.nubes_medias ?? 0,
-        scoreNubesAltas: pronosticoTarde.nubes_altas ?? 0,
-    };
+    // Usar ALGORITMO YACUVIÑA 3.0 - Detecta automáticamente el tipo de atardecer
+    const resultadoYacuvina = calcularScoreYacuvina(pronosticoTarde);
+    let puntaje = resultadoYacuvina.score;
+    let razonPositiva = `${resultadoYacuvina.tipo}: ${resultadoYacuvina.factores.join(', ')}`;
+    let razonesPenalizacion = [];
+
+    // ===== PENALIZACIONES ESPECÍFICAS PARA YACUVIÑA =====
     
-    let puntaje;
-    let razonPrincipal = "";
+    // Penalización por NEBLINA LOCAL (crítico para Yacuviña)
+    if (visibilidad !== undefined && visibilidad < 1) {
+        puntaje -= 40; // Penalización severa
+        razonesPenalizacion.push("Neblina densa local impide toda visibilidad");
+    } else if (visibilidad !== undefined && visibilidad < 3) {
+        puntaje -= 25;
+        razonesPenalizacion.push("Neblina local reduce visibilidad significativamente");
+    }
 
-    const nubesSuperiores = (nubes.scoreNubesMedias + nubes.scoreNubesAltas) / 2;
-    if (nubes.scoreNubesBajas > 70 && nubesSuperiores > 50) {
-        puntaje = 30;
-        razonPrincipal = "Cielo completamente cubierto, sin visibilidad.";
-    } else {
-        const scoreMarDeNubes = calcularScoreMarDeNubes(nubes.scoreNubesBajas, nubesSuperiores);
-        const scoreCieloIncendiado = calcularScoreCieloIncendiado(nubes.scoreNubesBajas, nubes.scoreNubesMedias, nubes.scoreNubesAltas);
-
-        if (scoreMarDeNubes > scoreCieloIncendiado) {
-            puntaje = scoreMarDeNubes;
-            razonPrincipal = "Buenas condiciones para mar de nubes.";
-        } else {
-            puntaje = scoreCieloIncendiado;
-            razonPrincipal = "Potencial de cielo muy colorido.";
-        }
+    // Penalización por LLUVIA (incompatible con cualquier atardecer)
+    const lluviaIcon = icono || '';
+    if (lluviaIcon.startsWith('09') || lluviaIcon.startsWith('10')) {
+        puntaje -= 30;
+        razonesPenalizacion.push("Lluvia activa");
     }
     
-    const altitudMirador = 2300;
-    if (typeof techo_nubes === 'number' && techo_nubes < altitudMirador && techo_nubes > 0) {
-        puntaje += 15;
-        razonPrincipal = "Techo de nubes bajo, ideal para mar de nubes.";
+    if (promedioLluvia >= 30) {
+        puntaje -= 20;
+        razonesPenalizacion.push(`Alta probabilidad de lluvia (${Math.round(promedioLluvia)}%)`);
+    } else if (promedioLluvia >= 15) {
+        puntaje -= 10;
+        razonesPenalizacion.push(`Probabilidad moderada de lluvia (${Math.round(promedioLluvia)}%)`);
     }
 
-    if (visibilidad !== undefined && visibilidad < 10) {
-        puntaje -= (10 - visibilidad) * 4;
-        razonPrincipal = "Posible neblina en el sitio.";
+    // Penalización por HUMEDAD EXTREMA (solo en casos extremos)
+    if (humedad !== undefined && humedad >= 98) {
+        puntaje -= 15;
+        razonesPenalizacion.push("Humedad extrema puede generar neblina");
+    }
+
+    // Penalización por VIENTO EXTREMO (dispersa nubes del valle)
+    if (viento !== undefined && viento > 30) {
+        puntaje -= 15;
+        razonesPenalizacion.push("Viento muy fuerte dispersa formaciones de nubes");
     }
     
-    const pronosticoHoraPrevia2 = datosDia.horas[horaCercana - 2];
-    if(pronosticoHoraPrevia2) {
-        const nubesAhoraTotal = nubes.scoreNubesBajas + nubes.scoreNubesMedias + nubes.scoreNubesAltas;
-        const nubesAntesTotal = (pronosticoHoraPrevia2.nubes_bajas ?? 0) + (pronosticoHoraPrevia2.nubes_medias ?? 0) + (pronosticoHoraPrevia2.nubes_altas ?? 0);
-        if (nubesAhoraTotal > nubesAntesTotal + 30) {
-            puntaje -= 15;
-            razonPrincipal = "El cielo se está nublando rápidamente.";
-        }
-    }
-
-    puntaje = Math.max(0, Math.min(100, puntaje));
-
-    if (promedioLluvia >= 30 && puntaje >= 75) {
-        puntaje = 74;
-        razonPrincipal = `Alto riesgo de lluvia (${Math.round(promedioLluvia)}%).`;
-    } else if (promedioLluvia > 20) {
-        puntaje -= promedioLluvia * 0.4;
-    }
+    // ===== FIN DE PENALIZACIONES =====
     
     puntaje = Math.max(0, Math.min(100, puntaje));
+
+    // Determinar razón final
+    const razonFinal = razonesPenalizacion.length > 0 ? 
+        `${razonesPenalizacion.join('. ')}` : razonPositiva;
 
     return {
         diaSemana: fecha.toLocaleDateString('es-EC', { weekday: 'long', timeZone: 'America/Guayaquil' }),
         fecha: fecha.toLocaleDateString('es-EC', { day: 'numeric', month: 'long', timeZone: 'America/Guayaquil' }),
         prediccion: convertirPuntajeATexto(puntaje),
-        razon: razonPrincipal,
-        confianza: Math.round(75 + (puntaje / 4)),
+        razon: razonFinal,
+        confianza: Math.round(80 + (puntaje / 5)), // Mayor confianza en el nuevo algoritmo
         temperatura: Math.round(temp),
         icono: pronosticoTarde.icono || '03d',
         horaAtardecer: new Date(sunTimes.sunset).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Guayaquil' }),
+        // Datos adicionales para análisis
+        puntajeNumerico: Math.round(puntaje),
+        tipoAtardecer: resultadoYacuvina.tipo,
+        humedad: Math.round(humedad || 0),
+        viento: Math.round(viento || 0),
+        uvIndex: Math.round(uv_index || 0),
+        visibilidad: visibilidad ? Math.round(visibilidad * 10) / 10 : null,
+        nubesBajas: Math.round(pronosticoTarde.nubes_bajas || 0),
+        nubesMedias: Math.round(pronosticoTarde.nubes_medias || 0),
+        nubesAltas: Math.round(pronosticoTarde.nubes_altas || 0)
     };
 };
 
@@ -203,12 +366,12 @@ const calcularPronosticoDia = (datosDia, fecha) => {
 export const actualizarDatosClima = async () => {
     const ahora = new Date();
     const ahoraISO = ahora.toISOString();
-    
     console.info(`[${ahoraISO}] ==> Ejecutando tarea: Actualizando datos...`);
     
     const { latitud, longitud, accuweatherLocationKey, apiKeys } = config;
+    // URL DE OPEN-METEO ACTUALIZADA PARA INCLUIR HUMEDAD Y MÁS VARIABLES CRÍTICAS
     const urls = [
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitud}&longitude=${longitud}&hourly=temperature_2m,precipitation_probability,cloudcover_low,cloudcover_mid,cloudcover_high,visibility&timezone=America/Guayaquil`,
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitud}&longitude=${longitud}&hourly=temperature_2m,relativehumidity_2m,precipitation_probability,cloudcover_low,cloudcover_mid,cloudcover_high,visibility,windspeed_10m,uv_index,surface_pressure&timezone=America/Guayaquil`,
         `https://api.openweathermap.org/data/2.5/forecast?lat=${latitud}&lon=${longitud}&appid=${apiKeys.openWeather}&units=metric`,
         `http://dataservice.accuweather.com/forecasts/v1/hourly/12hour/${accuweatherLocationKey}?apikey=${apiKeys.accuweather}&details=true&metric=true`
     ];
@@ -231,9 +394,6 @@ export const actualizarDatosClima = async () => {
         .sort()
         .filter(dateString => dateString >= hoyString)
         .map(dateString => {
-            // ===== AQUÍ ESTÁ LA CORRECCIÓN CLAVE =====
-            // Creamos la fecha de forma explícita para la zona horaria de Ecuador,
-            // asegurando que SunCalc siempre reciba el día correcto.
             const fecha = new Date(`${dateString}T18:00:00-05:00`);
             return calcularPronosticoDia(normalizedData[dateString], fecha);
         })
