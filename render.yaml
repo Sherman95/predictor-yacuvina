@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: predictor-yacuvina-api
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: OPENWEATHER_API_KEY
+        fromDatabase: false
+        value: 8bef6e87ce4a3cf48837b829fcbd2465
+      - key: ACCUWEATHER_API_KEY
+        fromDatabase: false
+        value: bfJNNNGdBxY2Xs8H93cHgjoyA66KIXZM
+      - key: WEATHERAPI_KEY
+        fromDatabase: false
+        value: 26b46f51e4d44c3e93505637250207
+    autoDeploy: true
+    branch: main

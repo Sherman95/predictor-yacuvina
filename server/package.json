@@ -3,7 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "debug:env": "curl http://localhost:3001/api/debug/environment",
+    "debug:fresh": "curl http://localhost:3001/api/debug/fresh-data",
+    "debug:api": "curl http://localhost:3001/api/debug/api-test"
   },
   "type": "module",
   "keywords": [],

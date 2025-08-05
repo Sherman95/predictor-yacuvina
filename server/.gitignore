@@ -1,1 +1,21 @@
+# Variables de entorno
 .env
+.env.local
+.env.production
+
+# Archivos de caché y logs
+*.log
+*.cache
+current-weather-cache.json
+comparison-report-*.json
+
+# Datos temporales
+pronostico.json
+validacion_historica.json
+
+# Dependencias
+node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
