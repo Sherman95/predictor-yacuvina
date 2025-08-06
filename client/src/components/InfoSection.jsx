@@ -1,9 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 function InfoSection() {
+  const [currentInfoIndex, setCurrentInfoIndex] = useState(0);
+  
+  // Array de información para los indicadores
+  const infoCards = [
+    "Ubicación Estratégica",
+    "Algoritmo Yacuviña 3.0", 
+    "Patrimonio Arqueológico",
+    "Precisión Meteorológica",
+    "Mejor Temporada",
+    "Recomendaciones"
+  ];
+
+  // Detectar scroll para actualizar indicadores
+  useEffect(() => {
+    const infoGrid = document.querySelector('.info-grid');
+    if (!infoGrid) return;
+
+    const handleScroll = () => {
+      const scrollLeft = infoGrid.scrollLeft;
+      const cardWidth = 320 + 16; // ancho card + gap
+      const newIndex = Math.round(scrollLeft / cardWidth);
+      setCurrentInfoIndex(Math.min(newIndex, infoCards.length - 1));
+    };
+
+    infoGrid.addEventListener('scroll', handleScroll);
+    return () => infoGrid.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <section className="info-detallada">
       <h2>🏔️ Yacuviña: Mirador Único en Ecuador</h2>
+      
+      {/* Indicadores solo para móvil */}
+      <div className="info-indicators">
+        {infoCards.map((_, index) => (
+          <div 
+            key={index}
+            className={`info-indicator ${index === currentInfoIndex ? 'active' : ''}`}
+          />
+        ))}
+      </div>
+      
       <div className="info-grid">
         <div className="info-card">
           <h3>📍 Ubicación Estratégica</h3>

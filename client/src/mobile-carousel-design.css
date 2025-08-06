@@ -1,0 +1,154 @@
+/* OPCIÓN 2: CARRUSEL HORIZONTAL PARA MÓVILES */
+/* Similar a Netflix/Instagram Stories - swipe horizontal */
+
+@media screen and (max-width: 768px) {
+  /* Contenedor de carrusel */
+  .pronostico-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Ocultar scrollbar pero mantener funcionalidad */
+  .pronostico-grid::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Tarjetas del carrusel */
+  .card {
+    flex: 0 0 280px !important; /* Ancho fijo para cada card */
+    max-width: 280px !important;
+    min-height: 400px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 1.5rem 1rem !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+    backdrop-filter: blur(15px) !important;
+    scroll-snap-align: center !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  }
+  
+  /* Indicador de posición */
+  .carrusel-indicador {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.5rem;
+    z-index: 1000;
+  }
+  
+  .indicador-punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
+  }
+  
+  .indicador-punto.activo {
+    background: white;
+    transform: scale(1.2);
+  }
+  
+  /* Header de cada card más prominente */
+  .card h2 {
+    font-size: 1.4rem !important;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: #1a202c;
+    text-shadow: 1px 1px 3px rgba(255, 255, 255, 0.8);
+  }
+  
+  .fecha {
+    font-size: 1rem !important;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+    font-weight: 600;
+  }
+  
+  /* Icono del clima más grande */
+  .weather-icon {
+    width: 80px !important;
+    height: 80px !important;
+    margin: 1rem 0;
+    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.2));
+  }
+  
+  /* Tipo de atardecer destacado */
+  .tipo-atardecer {
+    margin: 1rem 0;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem !important;
+    border-radius: 15px;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sunset-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Predicción muy prominente */
+  .prediccion-texto {
+    font-size: 1.6rem !important;
+    font-weight: 800;
+    margin: 1rem 0;
+    line-height: 1.2;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.9);
+  }
+  
+  /* Puntaje destacado */
+  .puntaje-numerico span {
+    font-size: 1.2rem !important;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-weight: 700;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    margin: 0.5rem 0;
+    display: inline-block;
+  }
+  
+  /* Detalles siempre visibles */
+  .detalles {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 1rem 0;
+    width: 100%;
+  }
+  
+  .detalles p {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem !important;
+    padding: 0.3rem 0.5rem;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    margin: 0;
+  }
+  
+  /* Botón de detalles en la parte inferior */
+  .ver-detalles-btn {
+    width: 100% !important;
+    padding: 0.8rem !important;
+    font-size: 0.85rem !important;
+    border-radius: 12px !important;
+    font-weight: 600;
+    margin-top: auto;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+}

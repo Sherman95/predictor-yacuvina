@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
+import './ios-fixes.css';
 
 // --- IMPORTANDO COMPONENTES ---
 import Header from './components/Header';
@@ -24,6 +25,23 @@ function App() {
   const [actualizado, setActualizado] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [imagenSeleccionada, setImagenSeleccionada] = useState(null);
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+
+  // Detectar scroll para indicadores de galería
+  useEffect(() => {
+    const galeriaGrid = document.querySelector('.galeria-grid');
+    if (!galeriaGrid) return;
+
+    const handleScroll = () => {
+      const scrollLeft = galeriaGrid.scrollLeft;
+      const imageWidth = 280 + 16; // ancho imagen + gap
+      const newIndex = Math.round(scrollLeft / imageWidth);
+      setCurrentGalleryIndex(Math.min(newIndex, imagenesYacuvina.length - 1));
+    };
+
+    galeriaGrid.addEventListener('scroll', handleScroll);
+    return () => galeriaGrid.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -123,6 +141,17 @@ function App() {
       
       <section className="galeria-container">
         <h2>Galería de Yacuviña</h2>
+        
+        {/* Indicadores de galería - solo en móvil */}
+        <div className="galeria-indicators">
+          {imagenesYacuvina.map((_, index) => (
+            <div 
+              key={index}
+              className={`galeria-indicator ${index === currentGalleryIndex ? 'active' : ''}`}
+            />
+          ))}
+        </div>
+        
         <div className="galeria-grid">
           {imagenesYacuvina.map((url, index) => (
             <img 

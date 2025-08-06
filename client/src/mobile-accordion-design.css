@@ -1,0 +1,197 @@
+/* OPCIÓN 3: DISEÑO ACORDEÓN COMPACTO PARA MÓVILES */
+/* Similar a WhatsApp/Telegram - información densa pero organizada */
+
+@media screen and (max-width: 768px) {
+  /* Contenedor de acordeón */
+  .pronostico-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    padding: 0.5rem !important;
+    width: 100%;
+  }
+  
+  /* Tarjetas compactas estilo acordeón */
+  .card {
+    display: flex !important;
+    flex-direction: column !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    backdrop-filter: blur(10px) !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease !important;
+    border-left: 4px solid transparent !important;
+  }
+  
+  /* Header compacto siempre visible */
+  .card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 1rem !important;
+    cursor: pointer !important;
+    user-select: none !important;
+  }
+  
+  /* Info principal del día */
+  .header-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+  }
+  
+  /* Día y fecha juntos */
+  .dia-fecha {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  
+  .card h2 {
+    font-size: 1.1rem !important;
+    font-weight: 700;
+    margin: 0;
+    color: #1a202c;
+  }
+  
+  .fecha {
+    font-size: 0.75rem !important;
+    opacity: 0.7;
+    margin: 0;
+  }
+  
+  /* Icono del clima en header */
+  .header-clima {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .weather-icon {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  /* Predicción rápida */
+  .prediccion-rapida {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+  }
+  
+  .prediccion-texto {
+    font-size: 0.9rem !important;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.1;
+  }
+  
+  .puntaje-numerico span {
+    font-size: 0.8rem !important;
+    padding: 0.2rem 0.4rem;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-top: 0.2rem;
+    display: inline-block;
+  }
+  
+  /* Indicador de expansión */
+  .expand-indicator {
+    margin-left: 0.5rem;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    color: #6c757d;
+  }
+  
+  .card.expanded .expand-indicator {
+    transform: rotate(180deg);
+  }
+  
+  /* Contenido expandible */
+  .card-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 1rem;
+  }
+  
+  .card.expanded .card-content {
+    max-height: 500px;
+    padding: 0 1rem 1rem 1rem;
+  }
+  
+  /* Grid de detalles en contenido expandido */
+  .detalles-grid-compacto {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .detalle-compacto {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.6rem;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 8px;
+    font-size: 0.75rem;
+  }
+  
+  .detalle-icono {
+    width: 16px;
+    height: 16px;
+    opacity: 0.7;
+  }
+  
+  /* Tipo de atardecer en contenido expandido */
+  .tipo-atardecer {
+    margin: 0.5rem 0;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem !important;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  .sunset-icon {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    margin-right: 0.3rem;
+  }
+  
+  /* Estados de las cards según predicción */
+  .card-excelente {
+    border-left-color: #28a745 !important;
+  }
+  
+  .card-bueno {
+    border-left-color: #17a2b8 !important;
+  }
+  
+  .card-regular {
+    border-left-color: #ffc107 !important;
+  }
+  
+  .card-malo {
+    border-left-color: #fd7e14 !important;
+  }
+  
+  .card-muy-malo {
+    border-left-color: #dc3545 !important;
+  }
+  
+  /* Animación suave al expandir */
+  .card:hover:not(.expanded) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  /* Separador visual entre días */
+  .card + .card {
+    margin-top: 0.5rem;
+  }
+}

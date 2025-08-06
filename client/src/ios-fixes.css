@@ -1,0 +1,931 @@
+/* =================================================================
+   CORRECCIONES MOBILE-FIRST PARA iOS Y ANDROID
+   Optimizado para móviles reales, no tablets
+================================================================= */
+
+/* Aplicar correcciones a TODOS los móviles, no solo webkit */
+@media screen and (max-width: 768px) {
+  /* OPTIMIZACIONES PARA MÓVILES REALES */
+  /* OPTIMIZACIONES PARA MÓVILES REALES */
+  
+  /* Fix para background en móviles */
+  body {
+    background-attachment: scroll !important; /* Mejor performance en móviles */
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+  }
+  
+  /* Espaciado optimizado para pantallas pequeñas */
+  .app-container {
+    padding: 0.5rem !important;
+    max-width: 100%;
+  }
+  
+  /* Header compacto para móviles */
+  .header-container {
+    padding: 1rem !important;
+    margin-bottom: 1rem;
+  }
+  
+  header h1 {
+    font-size: 1.8rem !important;
+    line-height: 1.2;
+    margin-bottom: 0.8rem;
+  }
+  
+  .subtitulo {
+    font-size: 0.9rem !important;
+    line-height: 1.4;
+  }
+  
+  /* Tipos de atardecer en columna para móviles */
+  .tipos-atardecer-info {
+    flex-direction: column !important;
+    gap: 0.8rem;
+    align-items: center;
+  }
+  
+  .tipo-info {
+    width: 90% !important;
+    max-width: 280px;
+    text-align: center;
+    padding: 0.8rem 1rem !important;
+    font-size: 0.85rem !important;
+  }
+  
+/* Mantener diseño original en desktop */
+@media screen and (min-width: 769px) {
+  .pronostico-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+    gap: 1.5rem !important;
+    padding: 1.5rem !important;
+  }
+  
+  .card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 1.5rem !important;
+    min-height: 400px !important;
+    border-radius: 15px !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08) !important;
+  }
+}
+
+/* CARRUSEL HORIZONTAL TIPO HISTORIAS DE INSTAGRAM SOLO PARA MÓVILES */
+@media screen and (max-width: 768px) {
+  .pronostico-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 1rem !important;
+    padding: 1rem 0.5rem !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important; /* Firefox */
+    width: 100%;
+  }
+  
+  /* Ocultar scrollbar en WebKit browsers */
+  .pronostico-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  /* Tarjetas tipo stories de Instagram con colores correctos */
+  .card {
+    flex: 0 0 300px !important; /* Ancho fijo para cada story */
+    max-width: 300px !important;
+    min-height: 500px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 2rem 1.5rem !important;
+    border-radius: 25px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+    backdrop-filter: blur(20px) !important;
+    scroll-snap-align: center !important;
+    border: 3px solid rgba(255, 255, 255, 0.4) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  /* Colores específicos para cada tipo de predicción */
+  .card-excelente {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.12) 100%) !important;
+    border-color: rgba(34, 197, 94, 0.4) !important;
+  }
+  
+  .card-bueno {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.12) 100%) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+  }
+  
+  .card-regular {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.12) 100%) !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+  }
+  
+  .card-malo {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.12) 100%) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+  }
+  
+  .card-muy-malo {
+    background: linear-gradient(135deg, rgba(190, 24, 93, 0.15) 0%, rgba(157, 23, 77, 0.12) 100%) !important;
+    border-color: rgba(190, 24, 93, 0.4) !important;
+  }
+}
+  
+  /* Banner del mejor día más compacto */
+  .mejor-dia-banner {
+    padding: 1.5rem 1rem !important;
+    margin-bottom: 1.5rem;
+  }
+  
+  .mejor-dia-banner h3 {
+    font-size: 1.3rem !important;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+  }
+  
+  .prediccion-destaque {
+    flex-direction: column !important;
+    gap: 0.8rem;
+  }
+  
+  .detalles-banner {
+    flex-direction: column !important;
+    gap: 0.5rem;
+    font-size: 0.85rem !important;
+  }
+  
+  /* Header estilo Instagram Stories con mejor contraste */
+  .card h2 {
+    font-size: 1.9rem !important;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    color: #fff !important;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.7);
+    letter-spacing: -0.5px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .fecha {
+    font-size: 1.2rem !important;
+    margin-bottom: 1.5rem;
+    opacity: 1;
+    font-weight: 700;
+    color: #fff !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+    letter-spacing: 0.3px;
+  }
+  
+  /* Icono del clima tipo story destacado */
+  .weather-icon {
+    width: 100px !important;
+    height: 100px !important;
+    margin: 1.5rem 0;
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.2));
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+  }
+  
+  /* Tipo de atardecer prominente como badge */
+  .tipo-atardecer {
+    margin: 1.5rem 0;
+    padding: 1rem 2rem;
+    font-size: 1.1rem !important;
+    border-radius: 25px;
+    font-weight: 800;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    color: #333 !important;
+    text-shadow: none;
+    backdrop-filter: blur(8px);
+    text-align: center;
+    display: inline-block;
+  }
+  
+  .sunset-icon {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    margin-bottom: 0.8rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+  }
+  
+  /* Predicción muy prominente tipo Instagram */
+  .prediccion-texto {
+    font-size: 2.2rem !important;
+    font-weight: 900;
+    margin: 1.5rem 0;
+    line-height: 1.1;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    letter-spacing: -1px;
+    color: #fff !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.5rem;
+    border-radius: 15px;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  /* Puntaje destacado tipo badge de story */
+  .puntaje-numerico span {
+    font-size: 1.6rem !important;
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    font-weight: 900;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    margin: 1rem 0;
+    display: inline-block;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    color: #333 !important;
+    text-shadow: none;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(10px);
+    transform: scale(1.05);
+  }
+  
+  /* Detalles siempre visibles tipo story */
+  .detalles {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin: 1.5rem 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1rem;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .detalles p {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem !important;
+    padding: 0.6rem 0.8rem;
+    background: rgba(248, 249, 250, 0.9);
+    border-radius: 12px;
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+  }
+  
+  .detalles p span:first-child {
+    opacity: 0.8;
+    font-weight: 500;
+  }
+  
+  /* Botón de detalles tipo Instagram */
+  .ver-detalles-btn {
+    width: 100% !important;
+    padding: 1rem !important;
+    font-size: 1rem !important;
+    border-radius: 20px !important;
+    font-weight: 700;
+    margin-top: auto;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%) !important;
+    border: 2px solid rgba(255, 255, 255, 0.5) !important;
+    color: #2d3748 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease !important;
+  }
+  
+  .ver-detalles-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+/* Optimizaciones adicionales para el carrusel tipo Stories */
+
+/* Indicadores solo visibles en móvil */
+.stories-indicators,
+.info-indicators,
+.galeria-indicators {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .stories-indicators,
+  .info-indicators,
+  .galeria-indicators {
+    display: flex !important;
+    justify-content: center;
+    gap: 0.3rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    margin: 0 auto 1rem auto;
+    max-width: fit-content;
+    position: relative !important;
+  }
+  
+  .story-indicator,
+  .info-indicator,
+  .galeria-indicator {
+    width: 30px;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
+  }
+  
+  .story-indicator.active,
+  .info-indicator.active,
+  .galeria-indicator.active {
+    background: white;
+    transform: scaleY(1.5);
+  }
+  
+  /* Smooth scrolling para todos los carruseles */
+  .pronostico-grid,
+  .info-grid,
+  .galeria-grid {
+    scroll-behavior: smooth !important;
+  }
+  
+  /* Efecto de hover/tap en todas las cards */
+  .card:active,
+  .info-card:active,
+  .galeria-img:active {
+    transform: scale(0.98) !important;
+    transition: transform 0.1s ease !important;
+  }
+  
+  /* Gradientes de predicción personalizados */
+  .card-excelente::before {
+    background: linear-gradient(45deg, #4CAF50, #8BC34A, #CDDC39) !important;
+  }
+  
+  .card-bueno::before {
+    background: linear-gradient(45deg, #2196F3, #03A9F4, #00BCD4) !important;
+  }
+  
+  .card-regular::before {
+    background: linear-gradient(45deg, #FF9800, #FFC107, #FFEB3B) !important;
+  }
+  
+  .card-malo::before {
+    background: linear-gradient(45deg, #FF5722, #FF6F00, #FF8F00) !important;
+  }
+  
+  .card-muy-malo::before {
+    background: linear-gradient(45deg, #F44336, #E91E63, #9C27B0) !important;
+  }
+  
+  /* Animación de entrada para las cards */
+  .card {
+    animation: slideInUp 0.6s ease-out !important;
+  }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Efecto de glassmorphism mejorado */
+  .card {
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+  }
+  
+  /* Sombras dinámicas según hora del día */
+  .card {
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.15),
+      0 20px 60px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  }
+}
+  
+  /* Botón de detalles más espacioso */
+  .ver-detalles-btn {
+    font-size: 0.75rem !important;
+    padding: 0.5rem 0.8rem !important;
+    min-height: 36px !important;
+    margin: 0.4rem 0;
+    border-radius: 12px;
+  }
+  
+  /* Mostrar detalles básicos en cuadrícula de forma ordenada */
+  .detalles {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.3rem !important;
+    margin: 0.3rem 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .detalles p {
+    padding: 0.2rem 0.4rem !important;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.7rem !important;
+    margin: 0;
+    min-width: 32px;
+  }
+  
+  /* Mostrar puntaje de forma prominente */
+  .puntaje-numerico {
+    margin: 0.3rem 0;
+    text-align: center;
+  }
+  
+  .puntaje-numerico span {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem !important;
+    border-radius: 15px;
+    font-weight: 600;
+  }
+  
+  /* Razón más compacta pero visible */
+  .razon-texto {
+    display: block !important;
+    padding: 0.4rem !important;
+    font-size: 0.7rem !important;
+    line-height: 1.3;
+    margin: 0.3rem 0;
+    border-radius: 8px;
+    text-align: center;
+  }
+  
+  /* Info cards en una columna */
+  .info-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+  
+  .info-card {
+    padding: 1rem !important;
+    margin-bottom: 0.8rem;
+  }
+  
+  .info-card h3 {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.8rem;
+  }
+  
+  .info-card p,
+  .info-card li {
+    font-size: 0.9rem !important;
+    line-height: 1.5;
+  }
+  
+  /* Botones optimizados para touch móvil */
+  .ver-detalles-btn {
+    padding: 1rem !important;
+    font-size: 0.9rem !important;
+    margin: 0.8rem 0;
+    min-height: 44px !important; /* Estándar móvil */
+  }
+  
+  .actualizar-button,
+  .retry-button {
+    padding: 0.8rem 1.2rem !important;
+    min-height: 44px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  /* Íconos más pequeños para móviles */
+  .sunset-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  
+  .sunset-icon-large {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+  }
+  
+  /* Clima actual compacto */
+  .clima-actual-card {
+    padding: 1rem !important;
+    margin-bottom: 1.5rem;
+  }
+  
+  .temperatura-valor {
+    font-size: 2rem !important;
+  }
+  
+  .detalle-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.8rem;
+  }
+  
+  .detalle-item {
+    padding: 0.8rem !important;
+    min-height: 50px;
+    font-size: 0.85rem;
+  }
+  
+  /* Textos de razón más compactos */
+  .razon-texto {
+    padding: 0.8rem !important;
+    font-size: 0.85rem !important;
+    line-height: 1.5;
+    margin: 0.8rem 0;
+  }
+  
+  /* Footer más compacto */
+  footer {
+    padding: 1.5rem 0.5rem !important;
+    margin-top: 1.5rem;
+  }
+}
+
+/* Correcciones específicas para iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  /* Mejorar performance específicamente en iOS */
+  .card,
+  .header-container,
+  .mejor-dia-banner,
+  .info-card {
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  
+  /* Scrolling suave en iOS */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevenir zoom en inputs iOS */
+  input[type="text"],
+  input[type="email"], 
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important; /* Previene zoom automático */
+  }
+}
+
+/* Media queries específicas para iOS Safari */
+@media screen and (-webkit-min-device-pixel-ratio: 2) {
+  /* Pantallas Retina - mejores bordes */
+  .card,
+  .header-container,
+  .info-card,
+  .mejor-dia-banner {
+    border-width: 0.5px;
+  }
+}
+
+/* Ajustes para teléfonos muy pequeños - carrusel adaptativo */
+@media screen and (max-width: 375px) {
+  .app-container {
+    padding: 0.3rem !important;
+  }
+  
+  .header-container {
+    padding: 0.8rem !important;
+  }
+  
+  header h1 {
+    font-size: 1.4rem !important;
+  }
+  
+  /* Carrusel más compacto en pantallas pequeñas */
+  .pronostico-grid {
+    gap: 0.8rem !important;
+    padding: 0.8rem 0.3rem !important;
+  }
+  
+  .card {
+    flex: 0 0 280px !important;
+    max-width: 280px !important;
+    min-height: 450px !important;
+    padding: 1.5rem 1rem !important;
+  }
+  
+  .prediccion-texto {
+    font-size: 1.6rem !important;
+  }
+  
+  .card h2 {
+    font-size: 1.5rem !important;
+  }
+  
+  .fecha {
+    font-size: 1rem !important;
+  }
+  
+  .weather-icon {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  
+  .tipo-atardecer {
+    font-size: 0.9rem !important;
+    padding: 0.6rem 1.2rem;
+  }
+  
+  .sunset-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+  
+  .puntaje-numerico span {
+    font-size: 1.2rem !important;
+    padding: 0.6rem 1.2rem;
+  }
+  
+  .ver-detalles-btn {
+    font-size: 0.9rem !important;
+    padding: 0.8rem !important;
+  }
+  
+  .detalles p {
+    font-size: 0.9rem !important;
+    padding: 0.5rem 0.7rem !important;
+  }
+  
+  .mejor-dia-banner {
+    padding: 1rem 0.6rem !important;
+  }
+}
+
+/* Ajustes para iPad */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+  .pronostico-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Modo oscuro - mantener consistencia pero mejorar legibilidad */
+@media (prefers-color-scheme: dark) {
+  /* Solo ajustar si el usuario prefiere modo oscuro */
+  /* Mantener los colores del diseño original */
+}
+
+/* =============================================
+   CARRUSEL PARA INFO-GRID (MÓVILES)
+   ============================================= */
+
+/* Mantener grid original en desktop */
+@media screen and (min-width: 769px) {
+  .info-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+    gap: 1.5rem !important;
+    padding: 1.5rem 0 !important;
+  }
+  
+  .info-card {
+    padding: 1.5rem !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  }
+}
+
+/* Carrusel tipo stories para info-grid en móviles */
+@media screen and (max-width: 768px) {
+  .info-detallada {
+    padding: 1rem 0 !important;
+  }
+  
+  .info-detallada h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+  }
+  
+  .info-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 1rem !important;
+    padding: 1rem 0.5rem !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  
+  .info-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .info-card {
+    flex: 0 0 320px !important;
+    max-width: 320px !important;
+    min-height: 420px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    padding: 2rem 1.5rem !important;
+    background: linear-gradient(135deg, rgba(103, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.08) 50%, rgba(240, 147, 251, 0.1) 100%) !important;
+    border-radius: 25px !important;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12) !important;
+    backdrop-filter: blur(20px) !important;
+    scroll-snap-align: center !important;
+    border: 2px solid rgba(103, 126, 234, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+  
+  .info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    border-radius: 25px 25px 0 0;
+  }
+  
+  .info-card h3 {
+    font-size: 1.4rem !important;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #1a202c;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .info-card p {
+    font-size: 1rem !important;
+    line-height: 1.6;
+    color: #4a5568;
+    margin-bottom: 1rem;
+    text-align: justify;
+  }
+  
+  .info-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .info-card li {
+    padding: 0.5rem 0;
+    font-size: 0.95rem !important;
+    color: #2d3748;
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  
+  .info-card li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: bold;
+  }
+  
+  .info-card strong {
+    color: #2d3748;
+    font-weight: 700;
+  }
+}
+
+/* =============================================
+   CARRUSEL PARA GALERÍA (MÓVILES) 
+   ============================================= */
+
+/* Mantener grid original en desktop */
+@media screen and (min-width: 769px) {
+  .galeria-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    gap: 1rem !important;
+    padding: 1rem 0 !important;
+  }
+  
+  .galeria-img {
+    width: 100% !important;
+    height: 200px !important;
+    object-fit: cover !important;
+    border-radius: 15px !important;
+    cursor: pointer !important;
+    transition: transform 0.3s ease !important;
+  }
+  
+  .galeria-img:hover {
+    transform: scale(1.05) !important;
+  }
+}
+
+/* Carrusel tipo stories para galería en móviles */
+@media screen and (max-width: 768px) {
+  .galeria-container {
+    padding: 2rem 0 !important;
+  }
+  
+  .galeria-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+    color: #2d3748;
+  }
+  
+  .galeria-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 1rem !important;
+    padding: 1rem 0.5rem 2rem 0.5rem !important;
+    scroll-snap-type: x mandatory !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  
+  .galeria-grid::-webkit-scrollbar {
+    display: none !important;
+  }
+  
+  .galeria-img {
+    flex: 0 0 280px !important;
+    max-width: 280px !important;
+    height: 350px !important;
+    object-fit: cover !important;
+    border-radius: 25px !important;
+    cursor: pointer !important;
+    scroll-snap-align: center !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+    border: 3px solid rgba(103, 126, 234, 0.4) !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    filter: brightness(1.1) contrast(1.1) saturate(1.2) !important;
+  }
+  
+  .galeria-img:active {
+    transform: scale(0.95) !important;
+  }
+  
+  /* Efecto overlay con gradiente en las imágenes */
+  .galeria-img::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.3));
+    border-radius: 0 0 22px 22px;
+    pointer-events: none;
+  }
+
+  /* Mejoras generales de texto para todas las cards */
+  .card p,
+  .card span,
+  .card div:not(.prediccion-texto):not(.puntaje-numerico):not(.tipo-atardecer) {
+    color: #fff !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  /* Asegurar que todos los elementos de texto sean legibles */
+  .card *:not(h2):not(.prediccion-texto):not(.puntaje-numerico span):not(.tipo-atardecer) {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+  }
+}

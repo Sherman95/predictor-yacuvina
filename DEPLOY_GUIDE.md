@@ -3,7 +3,7 @@
 ## 📋 **RESUMEN DE ARQUITECTURA:**
 - **Backend (Render)**: API del servidor con algoritmo Yacuviña 3.0
 - **Frontend (Vercel)**: Aplicación React con interfaz de usuario
-- **URL Backend**: `https://predictor-yacuvina-api.onrender.com`
+- **URL Backend**: `https://yacuvina-api-sherman95.onrender.com`
 - **URL Frontend**: `https://predictor-yacuvina.vercel.app`
 
 ---
@@ -54,18 +54,29 @@ WEATHERAPI_KEY=26b46f51e4d44c3e93505637250207
 2. Click **"Add New Project"**
 3. Busca y selecciona `Sherman95/predictor-yacuvina`
 4. **ANTES de hacer deploy**, click **"Configure Project"**
-5. **CONFIGURACIÓN CRÍTICA** (⚠️ MUY IMPORTANTE):
+5. **CONFIGURACIÓN CRÍTICA** (⚠️ CORREGIR ESTOS CAMPOS):
    ```
    Framework Preset: Vite
    Root Directory: client
-   Build Command: npm run build
-   Output Directory: dist
-   Install Command: npm install
+   Build Command: npm run build              ← CAMBIAR ESTE
+   Output Directory: dist                    ← CAMBIAR ESTE
+   Install Command: npm install              ← CAMBIAR ESTE
    ```
-6. **Environment Variables** → Add:
+   
+   **🔧 CONFIGURACIÓN CORRECTA EN TU PANTALLA:**
    ```
-   VITE_API_URL = https://predictor-yacuvina-api.onrender.com
+   Build Command: npm run build              (NO: cd client && npm install && npm run build)
+   Output Directory: dist                    (NO: client/dist)
+   Install Command: npm install              (NO: cd client && npm install)
    ```
+
+6. **Environment Variables** → **ELIMINAR EL EJEMPLO Y AGREGAR:**
+   ```
+   Key: VITE_API_URL
+   Value: https://yacuvina-api-sherman95.onrender.com
+   ```
+   **⚠️ IMPORTANTE:** Elimina la variable de ejemplo `EXAMPLE_NAME`
+
 7. Click **"Deploy"**
 
 #### **✅ Ventajas de esta opción:**

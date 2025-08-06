@@ -1,0 +1,144 @@
+/* OPCIÓN 1: DISEÑO DE LISTA VERTICAL PARA MÓVILES */
+/* Similar a Instagram/Facebook - scroll vertical natural */
+
+@media screen and (max-width: 768px) {
+  /* Contenedor principal */
+  .pronostico-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    width: 100%;
+  }
+  
+  /* Tarjetas horizontales tipo card feed */
+  .card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 1.2rem !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    min-height: 100px !important;
+    width: 100%;
+  }
+  
+  /* Sección izquierda - Info principal */
+  .card-info-principal {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  /* Sección central - Icono del clima */
+  .card-clima-visual {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  /* Sección derecha - Predicción y puntaje */
+  .card-prediccion {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    gap: 0.3rem;
+  }
+  
+  /* Estilos para la info principal */
+  .card h2 {
+    font-size: 1.2rem !important;
+    font-weight: 700;
+    margin: 0;
+    color: #1a202c;
+  }
+  
+  .fecha {
+    font-size: 0.85rem !important;
+    opacity: 0.8;
+    margin: 0;
+  }
+  
+  .tipo-atardecer {
+    font-size: 0.75rem !important;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    display: inline-block;
+    margin: 0.2rem 0;
+  }
+  
+  /* Icono del clima central */
+  .weather-icon {
+    width: 50px !important;
+    height: 50px !important;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+  }
+  
+  .sunset-icon {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+  
+  /* Predicción prominente */
+  .prediccion-texto {
+    font-size: 1.1rem !important;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+    text-align: right;
+  }
+  
+  .puntaje-numerico span {
+    font-size: 1rem !important;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 0.3rem;
+  }
+  
+  /* Detalles básicos siempre visibles */
+  .detalles {
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-top: 0.3rem;
+  }
+  
+  .detalles p {
+    font-size: 0.75rem !important;
+    margin: 0;
+    opacity: 0.8;
+  }
+  
+  /* Ocultar botón de detalles por defecto, mostrar solo en tap */
+  .ver-detalles-btn {
+    display: none;
+  }
+  
+  /* Al hacer tap en la card, mostrar más info */
+  .card.expanded .ver-detalles-btn {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 10px;
+    width: 100%;
+  }
+  
+  /* Panel expandido ocupa toda la card */
+  .detalles-expandidos {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    width: 100%;
+  }
+}
