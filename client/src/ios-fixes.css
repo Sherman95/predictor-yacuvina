@@ -3,6 +3,23 @@
    Optimizado para móviles reales, no tablets
 ================================================================= */
 
+/* Variables CSS heredadas del diseño principal */
+:root {
+  --sunset-orange: #ff6b35;
+  --sunset-pink: #f7931e;
+  --sunset-purple: #c77dff;
+  --sunset-deep: #7209b7;
+  --golden-hour: #ffb347;
+  --primary-color: #ff6b35;
+  --secondary-color: #c77dff;
+  --accent-color: #ffb347;
+  --success-color: #ff9500;
+  --warning-color: #ffd60a;
+  --danger-color: #d00000;
+  --text-primary: #f8f9fa;
+  --text-secondary: #ffcdb2;
+}
+
 /* Aplicar correcciones a TODOS los móviles, no solo webkit */
 @media screen and (max-width: 768px) {
   /* OPTIMIZACIONES PARA MÓVILES REALES */
@@ -117,35 +134,35 @@
     overflow: hidden !important;
   }
   
-  /* Colores mejorados para cada tipo de predicción con mejor contraste */
+  /* Colores UNIFICADOS para cada tipo de predicción - iguales a escritorio */
   .card-excelente {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(16, 185, 129, 0.20) 100%) !important;
-    border-color: rgba(34, 197, 94, 0.6) !important;
-    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15) !important;
+    background: linear-gradient(135deg, rgba(255, 149, 0, 0.2) 0%, rgba(255, 179, 71, 0.15) 100%) !important;
+    border-color: rgba(255, 149, 0, 0.6) !important;
+    box-shadow: 0 8px 25px rgba(255, 149, 0, 0.2) !important;
   }
   
   .card-bueno {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.20) 100%) !important;
-    border-color: rgba(59, 130, 246, 0.6) !important;
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15) !important;
+    background: linear-gradient(135deg, rgba(255, 179, 71, 0.2) 0%, rgba(255, 107, 53, 0.15) 100%) !important;
+    border-color: rgba(255, 179, 71, 0.6) !important;
+    box-shadow: 0 8px 25px rgba(255, 179, 71, 0.2) !important;
   }
   
   .card-regular {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.20) 100%) !important;
-    border-color: rgba(245, 158, 11, 0.6) !important;
-    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.15) !important;
+    background: linear-gradient(135deg, rgba(255, 214, 10, 0.2) 0%, rgba(255, 149, 0, 0.15) 100%) !important;
+    border-color: rgba(255, 214, 10, 0.6) !important;
+    box-shadow: 0 8px 25px rgba(255, 214, 10, 0.2) !important;
   }
   
   .card-malo {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.20) 100%) !important;
-    border-color: rgba(239, 68, 68, 0.6) !important;
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15) !important;
+    background: rgba(26, 26, 46, 0.9) !important;
+    border-color: rgba(208, 0, 0, 0.6) !important;
+    box-shadow: 0 8px 25px rgba(208, 0, 0, 0.2) !important;
   }
   
   .card-muy-malo {
-    background: linear-gradient(135deg, rgba(190, 24, 93, 0.25) 0%, rgba(157, 23, 77, 0.20) 100%) !important;
-    border-color: rgba(190, 24, 93, 0.6) !important;
-    box-shadow: 0 8px 25px rgba(190, 24, 93, 0.15) !important;
+    background: rgba(26, 26, 46, 0.95) !important;
+    border-color: rgba(211, 47, 47, 0.6) !important;
+    box-shadow: 0 8px 25px rgba(211, 47, 47, 0.25) !important;
   }
 }
   
@@ -242,22 +259,87 @@
     filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
   }
   
-  /* Predicción optimizada para móvil con mejor contraste */
+  /* Predicción optimizada para móvil con colores específicos por tipo */
   .prediccion-texto {
-    font-size: 1.6rem !important; /* Reducido para mejor ajuste */
+    font-size: 1.6rem !important;
     font-weight: 900;
-    margin: 1rem 0; /* Margen reducido */
+    margin: 1rem 0;
     line-height: 1.1;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
     text-align: center;
     letter-spacing: -0.5px;
-    color: #fff !important;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5));
     backdrop-filter: blur(10px);
-    padding: 0.8rem 1rem; /* Padding reducido */
+    padding: 0.8rem 1rem;
     border-radius: 12px;
     text-transform: uppercase;
     border: 2px solid rgba(255, 255, 255, 0.4);
+  }
+
+  /* Colores específicos para cada tipo de predicción */
+  .card-excelente .prediccion-texto {
+    background: linear-gradient(135deg, var(--success-color), var(--golden-hour)) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-shadow: none !important;
+  }
+
+  .card-bueno .prediccion-texto {
+    background: linear-gradient(135deg, var(--golden-hour), var(--sunset-pink)) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-shadow: none !important;
+  }
+
+  .card-regular .prediccion-texto {
+    background: linear-gradient(135deg, var(--warning-color), #ff9500) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-shadow: none !important;
+  }
+
+  .card-malo .prediccion-texto {
+    color: var(--danger-color) !important;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5) !important;
+    background: none !important;
+  }
+
+  .card-muy-malo .prediccion-texto {
+    background: linear-gradient(135deg, #ff6b6b, #ff5252, #ff1744) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-shadow: none !important;
+    font-weight: 700 !important;
+  }
+
+  /* Razón del pronóstico optimizada para móvil */
+  .razon-texto {
+    font-size: 0.85rem !important;
+    font-style: italic;
+    padding: 0.8rem 1rem !important;
+    border-radius: 12px !important;
+    margin: 1rem 0 !important;
+    text-align: center;
+    line-height: 1.4 !important;
+    backdrop-filter: blur(5px) !important;
+  }
+
+  /* Colores específicos para razón según tipo de card */
+  .card-excelente .razon-texto,
+  .card-bueno .razon-texto,
+  .card-regular .razon-texto {
+    color: var(--warning-color) !important;
+    background: rgba(255, 214, 10, 0.15) !important;
+    border: 1px solid rgba(255, 214, 10, 0.3) !important;
+  }
+
+  .card-malo .razon-texto,
+  .card-muy-malo .razon-texto {
+    background: rgba(255, 107, 107, 0.15) !important;
+    border: 1px solid rgba(255, 107, 107, 0.4) !important;
+    color: #ffcdd2 !important;
   }
   
   /* Puntaje optimizado para móvil con mejor contraste */
@@ -330,6 +412,124 @@
   .ver-detalles-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  /* Panel de detalles expandido para móvil */
+  .detalles-expandidos {
+    margin-top: 1rem !important;
+    padding: 1rem !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-radius: 15px !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    animation: slideDown 0.3s ease-out !important;
+  }
+
+  .detalles-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.8rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .detalle-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 0.8rem !important;
+    background: rgba(248, 249, 250, 0.9) !important;
+    border-radius: 10px !important;
+    gap: 0.3rem !important;
+  }
+
+  .detalle-icono {
+    font-size: 1.2rem !important;
+    color: #667eea !important;
+  }
+
+  .detalle-valor {
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    color: #2d3748 !important;
+  }
+
+  .detalle-label {
+    font-size: 0.75rem !important;
+    color: #4a5568 !important;
+    font-weight: 500 !important;
+  }
+
+  /* Información de nubes para móvil */
+  .nubes-info {
+    margin-top: 1rem !important;
+  }
+
+  .nubes-info h4 {
+    font-size: 1rem !important;
+    color: #2d3748 !important;
+    margin-bottom: 0.8rem !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+  }
+
+  .nube-barra {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .nube-label {
+    font-size: 0.75rem !important;
+    color: #4a5568 !important;
+    min-width: 50px !important;
+    font-weight: 600 !important;
+  }
+
+  .nube-progress {
+    flex: 1 !important;
+    height: 8px !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+  }
+
+  .nube-fill {
+    height: 100% !important;
+    border-radius: 4px !important;
+    transition: width 0.3s ease !important;
+  }
+
+  .nube-baja {
+    background: linear-gradient(90deg, #4ade80, #22c55e) !important;
+  }
+
+  .nube-media {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b) !important;
+  }
+
+  .nube-alta {
+    background: linear-gradient(90deg, #f87171, #ef4444) !important;
+  }
+
+  .nube-valor {
+    font-size: 0.75rem !important;
+    color: #2d3748 !important;
+    min-width: 35px !important;
+    text-align: right !important;
+    font-weight: 600 !important;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
 /* Optimizaciones adicionales para el carrusel tipo Stories */

@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2025-08-06T01:00:00.029Z",
+  "lastUpdated": "2025-08-06T02:00:00.037Z",
   "forecast": [
     {
       "diaSemana": "martes",
@@ -15,7 +15,7 @@
       "humedad": 91,
       "viento": 3,
       "uvIndex": 0,
-      "visibilidad": 12.8,
+      "visibilidad": 19.5,
       "nubesBajas": 69,
       "nubesMedias": 76,
       "nubesAltas": 0
@@ -53,7 +53,7 @@
       "humedad": 91,
       "viento": 6,
       "uvIndex": 0,
-      "visibilidad": 0.4,
+      "visibilidad": 0.2,
       "nubesBajas": 90,
       "nubesMedias": 73,
       "nubesAltas": 10
@@ -72,7 +72,7 @@
       "humedad": 89,
       "viento": 6,
       "uvIndex": 0,
-      "visibilidad": 1.1,
+      "visibilidad": 1.2,
       "nubesBajas": 93,
       "nubesMedias": 82,
       "nubesAltas": 100
@@ -110,7 +110,7 @@
       "humedad": 90,
       "viento": 7,
       "uvIndex": 2,
-      "visibilidad": 20.9,
+      "visibilidad": 18.5,
       "nubesBajas": 84,
       "nubesMedias": 49,
       "nubesAltas": 0
@@ -129,7 +129,7 @@
       "humedad": 93,
       "viento": 8,
       "uvIndex": 3,
-      "visibilidad": 20.8,
+      "visibilidad": 22.4,
       "nubesBajas": 93,
       "nubesMedias": 48,
       "nubesAltas": 0
