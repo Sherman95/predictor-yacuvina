@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import './App.css';
-import './ios-fixes.css';
+import './styles/utilities.css';
+import './styles/themes.css';
+import './styles/typography.css';
+import './styles/reduced-animations.css';
 
 // --- IMPORTANDO COMPONENTES ---
 import Header from './components/Header';
+import Alert from './components/Alert';
 import InfoSection from './components/InfoSection';
 import ClimaActual from './components/ClimaActual';
 import PronosticoSection from './components/PronosticoSection';
@@ -18,30 +22,40 @@ const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
 
 
 function App() {
-  // --- TODA LA LÓGICA Y ESTADO VUELVEN AL COMPONENTE PADRE ---
   const [pronostico, setPronostico] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [actualizado, setActualizado] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [imagenSeleccionada, setImagenSeleccionada] = useState(null);
-  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('yacuvina-theme') || 'theme-dark';
+    } catch {
+      return 'theme-dark';
+    }
+  });
+  const [reduceAnim, setReduceAnim] = useState(() => {
+    try { return localStorage.getItem('yacuvina-reduce-anim') === '1'; } catch { return false; }
+  });
 
-  // Detectar scroll para indicadores de galería
+  // Aplicar clase de tema al <html> para que los overrides de variables funcionen globalmente
   useEffect(() => {
-    const galeriaGrid = document.querySelector('.galeria-grid');
-    if (!galeriaGrid) return;
+    const root = document.documentElement;
+    root.classList.remove('theme-dark', 'theme-light');
+    root.classList.add(theme);
+    try { localStorage.setItem('yacuvina-theme', theme); } catch {}
+  }, [theme]);
 
-    const handleScroll = () => {
-      const scrollLeft = galeriaGrid.scrollLeft;
-      const imageWidth = 280 + 16; // ancho imagen + gap
-      const newIndex = Math.round(scrollLeft / imageWidth);
-      setCurrentGalleryIndex(Math.min(newIndex, imagenesYacuvina.length - 1));
-    };
+  // Reduced animations toggle
+  useEffect(() => {
+    const root = document.documentElement;
+    if (reduceAnim) root.classList.add('reduce-anim'); else root.classList.remove('reduce-anim');
+    try { localStorage.setItem('yacuvina-reduce-anim', reduceAnim ? '1' : '0'); } catch {}
+  }, [reduceAnim]);
 
-    galeriaGrid.addEventListener('scroll', handleScroll);
-    return () => galeriaGrid.removeEventListener('scroll', handleScroll);
-  }, []);
+  const toggleTheme = () => setTheme(t => t === 'theme-dark' ? 'theme-light' : 'theme-dark');
+  const toggleReduceAnim = () => setReduceAnim(v => !v);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -101,7 +115,7 @@ function App() {
   }, [pronostico]);
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
       {/* ===== INICIO DEL BLOQUE CORREGIDO ===== */}
       {imagenSeleccionada && (
         <div className="visor-overlay" onClick={() => setImagenSeleccionada(null)}>
@@ -116,18 +130,23 @@ function App() {
       )}
       {/* ===== FIN DEL BLOQUE CORREGIDO ===== */}
       
-      <Header actualizado={actualizado} isRefreshing={isRefreshing} />
+  <Header actualizado={actualizado} isRefreshing={isRefreshing} />
       <InfoSection />
       
       {/* 🌤️ CLIMA ACTUAL DE YACUVIÑA */}
-      <ClimaActual />
+  <div aria-live="polite" aria-busy={cargando ? 'true' : 'false'}>
+        <ClimaActual />
+      </div>
       
-      <PronosticoSection 
-        cargando={cargando}
-        error={error}
-        pronostico={pronostico}
-        mejorDia={mejorDia}
-      />
+      <section aria-live="polite" aria-busy={cargando ? 'true' : 'false'}>
+  {error && <Alert type="error" message={error} />}
+        <PronosticoSection 
+          cargando={cargando}
+          error={error}
+          pronostico={pronostico}
+          mejorDia={mejorDia}
+        />
+      </section>
 
       {/* Aquí puedes seguir componentizando las secciones estáticas si quieres */}
       <section className="actividades-container">
@@ -142,24 +161,16 @@ function App() {
       <section className="galeria-container">
         <h2>Galería de Yacuviña</h2>
         
-        {/* Indicadores de galería - solo en móvil */}
-        <div className="galeria-indicators">
-          {imagenesYacuvina.map((_, index) => (
-            <div 
-              key={index}
-              className={`galeria-indicator ${index === currentGalleryIndex ? 'active' : ''}`}
-            />
-          ))}
-        </div>
-        
         <div className="galeria-grid">
           {imagenesYacuvina.map((url, index) => (
-            <img 
-              key={index} 
-              src={url} 
-              alt={`Imagen de Yacuviña ${index + 1}`} 
+            <img
+              key={index}
+              src={url}
+              alt={`Imagen de Yacuviña ${index + 1}`}
               className="galeria-img"
-              onClick={() => setImagenSeleccionada(url)} 
+              onClick={() => setImagenSeleccionada(url)}
+              loading="lazy"
+              decoding="async"
             />
           ))}
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// Esta función para determinar el color de la tarjeta ahora vive aquí.
+// Función para determinar el color de la tarjeta optimizada para desktop
 const getCardColor = (prediccion) => {
     if (prediccion.startsWith("Excelente") || prediccion.startsWith("Mar de Nubes Ideal") || prediccion.startsWith("Atardecer Perfecto")) return 'card-excelente';
     if (prediccion.startsWith("Bueno")) return 'card-bueno';
@@ -10,17 +10,17 @@ const getCardColor = (prediccion) => {
     return '';
 };
 
-// Obtener ícono personalizado para tipo de atardecer
+// Obtener emoji para tipo de atardecer (optimizado para desktop)
 const getTipoAtardecerInfo = (tipo) => {
     if (tipo === "Mar de Nubes") {
-        return { icon: "icon-mar-nubes", symbol: "☁", descripcion: "Vista desde arriba de las nubes", color: "#20c997" };
+        return { emoji: "☁️", descripcion: "Vista desde arriba de las nubes", color: "#20c997" };
     } else if (tipo === "Atardecer Despejado") {
-        return { icon: "icon-atardecer-despejado", symbol: "☀", descripcion: "Vista panorámica del valle", color: "#ffc107" };
+        return { emoji: "🌅", descripcion: "Vista panorámica del valle", color: "#ffc107" };
     }
-    return { icon: "icon-mixto", symbol: "◐", descripcion: "Condiciones mixtas", color: "#6c757d" };
+    return { emoji: "🌤️", descripcion: "Condiciones mixtas", color: "#6c757d" };
 };
 
-// El componente recibe los datos de un 'dia' como prop
+// Componente optimizado para desktop
 function PronosticoCard({ dia }) {
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
   
@@ -29,15 +29,15 @@ function PronosticoCard({ dia }) {
   const tipoInfo = getTipoAtardecerInfo(dia.tipoAtardecer);
 
   return (
-    <div className={`card ${getCardColor(dia.prediccion)}`}>
+  <div className={`card forecast-card ${getCardColor(dia.prediccion)}`}>
       <h2>{dia.diaSemana}</h2>
       <p className="fecha">{dia.fecha}</p>
       
-      {/* Tipo de atardecer con ícono personalizado */}
+      {/* Tipo de atardecer con emoji optimizado */}
       {dia.tipoAtardecer && (
         <div className="tipo-atardecer" style={{ color: tipoInfo.color }}>
-          <span className={`sunset-icon ${tipoInfo.icon}`}>
-            <span className="icon-symbol">{tipoInfo.symbol}</span>
+          <span className="emoji-icon" style={{ fontSize: '2.5rem', marginRight: '0.8rem' }}>
+            {tipoInfo.emoji}
           </span>
           <span className="tipo-texto">{dia.tipoAtardecer}</span>
         </div>
@@ -48,7 +48,9 @@ function PronosticoCard({ dia }) {
         src={`http://openweathermap.org/img/wn/${dia.icono}@2x.png`} 
         alt={`Icono del clima: ${dia.prediccion}`} 
       />
+      
       <p className="prediccion-texto">{dia.prediccion}</p>
+      
       {dia.puntajeNumerico && (
         <div className="puntaje-numerico">
           <span>{dia.puntajeNumerico}/100</span>
@@ -57,90 +59,132 @@ function PronosticoCard({ dia }) {
       
       {dia.razon && <p className="razon-texto">{dia.razon}</p>}
       
-      <div className="detalles">
-        <p><span>Temp:</span> {dia.temperatura}°C</p>
-        <p><span>Atardecer:</span> {dia.horaAtardecer}</p>
-      </div>
+  {/* Métricas avanzadas ahora solo dentro de detalles expandido */}
       
-      {/* Botón para ver más detalles */}
+      {/* Botón para ver más detalles desktop */}
       <button 
-        className="ver-detalles-btn" 
+        className="btn-primary ver-detalles-btn" 
         onClick={() => setMostrarDetalles(!mostrarDetalles)}
         aria-expanded={mostrarDetalles}
+        aria-label={mostrarDetalles ? 'Ocultar detalles del día' : 'Mostrar detalles del día'}
+        type="button"
+        style={{ width: '100%' }}
       >
         {mostrarDetalles ? '▼ Menos detalles' : '▶ Más detalles'}
       </button>
       
-      {/* Panel de detalles expandible */}
+      {/* Panel de detalles expandible optimizado para desktop */}
       {mostrarDetalles && (
-        <div className="detalles-expandidos">
-          <div className="detalles-grid">
+        <div className="detalles-expandidos panel-expandido">
+          <div className="metric-chips" aria-label="Métricas detalladas del día">
+            {dia.temperatura !== undefined && (
+              <div className="metric-chip metric-temp" aria-label={`Temperatura ${dia.temperatura} grados Celsius`}>
+                <span className="metric-icon">🌡️</span>
+                <div className="metric-info">
+                  <span className="metric-value">{dia.temperatura}°C</span>
+                  <span className="metric-label">Temp</span>
+                </div>
+              </div>
+            )}
+            {dia.horaAtardecer && (
+              <div className="metric-chip metric-sunset" aria-label={`Hora de atardecer ${dia.horaAtardecer}`}>
+                <span className="metric-icon">🌇</span>
+                <div className="metric-info">
+                  <span className="metric-value" data-small>{dia.horaAtardecer}</span>
+                  <span className="metric-label">Atardecer</span>
+                </div>
+              </div>
+            )}
             {dia.humedad !== undefined && (
-              <div className="detalle-item">
-                <span className="detalle-icono icon-humedad"></span>
-                <span className="detalle-valor">{dia.humedad}%</span>
-                <span className="detalle-label">Humedad</span>
+              <div className="metric-chip metric-humidity" aria-label={`Humedad relativa ${dia.humedad}%`}>
+                <span className="metric-icon">💧</span>
+                <div className="metric-info">
+                  <span className="metric-value">{dia.humedad}%</span>
+                  <span className="metric-label">Humedad</span>
+                  <div className="metric-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={dia.humedad}>
+                    <div className="metric-bar-fill" style={{ width: `${Math.min(100, Math.max(0, dia.humedad))}%` }} />
+                  </div>
+                </div>
               </div>
             )}
             {dia.viento !== undefined && (
-              <div className="detalle-item">
-                <span className="detalle-icono icon-viento"></span>
-                <span className="detalle-valor">{dia.viento} km/h</span>
-                <span className="detalle-label">Viento</span>
+              <div className="metric-chip metric-wind" aria-label={`Viento ${dia.viento} kilómetros por hora`}>
+                <span className="metric-icon">💨</span>
+                <div className="metric-info">
+                  <span className="metric-value">{dia.viento} km/h</span>
+                  <span className="metric-label">Viento</span>
+                  <div className="metric-badge wind-badge">{dia.viento <= 10 ? 'Suave' : dia.viento <= 20 ? 'Moderado' : dia.viento <= 30 ? 'Fuerte' : 'Muy Fuerte'}</div>
+                </div>
               </div>
             )}
+          </div>
+          <div className="detalles-grid grid-expandido">
             {dia.visibilidad && (
-              <div className="detalle-item">
-                <span className="detalle-icono icon-visibilidad"></span>
-                <span className="detalle-valor">{dia.visibilidad} km</span>
-                <span className="detalle-label">Visibilidad</span>
+              <div className="detalle-item detalle-extra">
+                <span className="detalle-emoji">👁️</span>
+                <span className="detalle-valor-extra">{dia.visibilidad} km</span>
+                <span className="detalle-label-extra">Visibilidad</span>
               </div>
             )}
             {dia.uvIndex !== undefined && (
-              <div className="detalle-item">
-                <span className="detalle-icono icon-uv"></span>
-                <span className="detalle-valor">{dia.uvIndex}</span>
-                <span className="detalle-label">Índice UV</span>
+              <div className="detalle-item detalle-extra">
+                <span className="detalle-emoji">☀️</span>
+                <span className="detalle-valor-extra">{dia.uvIndex}</span>
+                <span className="detalle-label-extra">Índice UV</span>
               </div>
             )}
           </div>
           
-          {/* Información de nubes */}
-          <div className="nubes-info">
-            <h4>Cobertura de Nubes</h4>
-            <div className="nubes-barras">
-              <div className="nube-barra">
-                <span className="nube-label">Bajas:</span>
-                <div className="nube-progress">
-                  <div 
-                    className="nube-fill nube-baja" 
-                    style={{ width: `${dia.nubesBajas || 0}%` }}
-                  ></div>
-                </div>
-                <span className="nube-valor">{dia.nubesBajas || 0}%</span>
-              </div>
-              <div className="nube-barra">
-                <span className="nube-label">Medias:</span>
-                <div className="nube-progress">
-                  <div 
-                    className="nube-fill nube-media" 
-                    style={{ width: `${dia.nubesMedias || 0}%` }}
-                  ></div>
-                </div>
-                <span className="nube-valor">{dia.nubesMedias || 0}%</span>
-              </div>
-              <div className="nube-barra">
-                <span className="nube-label">Altas:</span>
-                <div className="nube-progress">
-                  <div 
-                    className="nube-fill nube-alta" 
-                    style={{ width: `${dia.nubesAltas || 0}%` }}
-                  ></div>
-                </div>
-                <span className="nube-valor">{dia.nubesAltas || 0}%</span>
+          {/* Información de nubes optimizada para desktop */}
+          {(dia.nubesBajas || dia.nubesMedias || dia.nubesAltas) && (
+            <div className="nubes-info" style={{ marginTop: '20px' }}>
+              <h4 style={{ 
+                fontSize: '1.3rem', 
+                color: 'var(--text-super-bright)', 
+                textAlign: 'center', 
+                marginBottom: '15px', 
+                fontWeight: '700' 
+              }}>Cobertura de Nubes</h4>
+              <div className="nubes-barras">
+                {dia.nubesBajas !== undefined && (
+                  <div className="nube-barra nube-line">
+                    <span className="nube-label">Bajas:</span>
+                    <div className="nube-progress nube-track">
+                      <div 
+                        className="nube-fill" 
+                        style={{ width: `${dia.nubesBajas}%` }}
+                      ></div>
+                    </div>
+                    <span className="nube-valor nube-valor-extra">{dia.nubesBajas}%</span>
+                  </div>
+                )}
+                {dia.nubesMedias !== undefined && (
+                  <div className="nube-barra nube-line">
+                    <span className="nube-label">Medias:</span>
+                    <div className="nube-progress nube-track">
+                      <div 
+                        className="nube-fill" 
+                        style={{ width: `${dia.nubesMedias}%` }}
+                      ></div>
+                    </div>
+                    <span className="nube-valor nube-valor-extra">{dia.nubesMedias}%</span>
+                  </div>
+                )}
+                {dia.nubesAltas !== undefined && (
+                  <div className="nube-barra nube-line">
+                    <span className="nube-label">Altas:</span>
+                    <div className="nube-progress nube-track">
+                      <div 
+                        className="nube-fill" 
+                        style={{ width: `${dia.nubesAltas}%` }}
+                      ></div>
+                    </div>
+                    <span className="nube-valor nube-valor-extra">{dia.nubesAltas}%</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
       

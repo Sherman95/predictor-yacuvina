@@ -1,0 +1,43 @@
+/* =============================================================
+   THEMES: light / dark using CSS custom properties overrides
+   ============================================================= */
+
+/* Dark theme is base (already in App.css variables) */
+:root.theme-dark {
+  color-scheme: dark;
+}
+
+/* Light theme overrides */
+:root.theme-light {
+  --dark-bg: #f5f7fb;
+  --glass-bg: rgba(255,255,255,0.55);
+  --card-bg: rgba(255,255,255,0.9);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --sunset-background: linear-gradient(180deg,#fff8e1 0%,#ffe5b4 30%,#ffd1dc 55%,#c7d2fe 80%,#93c5fd 100%);
+  --shadow-glass: 0 4px 22px -6px rgba(0,0,0,.18),0 2px 8px -2px rgba(0,0,0,.12);
+  --shadow-hover: 0 10px 28px -6px rgba(0,0,0,.25),0 6px 14px -4px rgba(0,0,0,.18);
+  --gradient-primary: linear-gradient(135deg,#fb923c,#f97316);
+  --gradient-secondary: linear-gradient(135deg,#6366f1,#8b5cf6);
+  --gradient-accent: linear-gradient(135deg,#f59e0b,#f43f5e);
+  --gradient-success: linear-gradient(135deg,#16a34a,#22c55e);
+  --gradient-danger: linear-gradient(135deg,#dc2626,#f43f5e);
+}
+
+/* Component adjustments in light mode */
+:root.theme-light body { color: var(--text-primary); }
+:root.theme-light .info-card { background: rgba(255,255,255,0.9); }
+:root.theme-light header .header-container { border-color: rgba(0,0,0,0.08); }
+:root.theme-light .tipo-info { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.08); }
+:root.theme-light .card { background: var(--glass-bg); }
+:root.theme-light .prediccion-texto { text-shadow: none; }
+:root.theme-light .confianza span { color: var(--text-secondary); }
+:root.theme-light .mejor-dia-banner { background: var(--glass-bg); }
+:root.theme-light footer { color: var(--text-secondary); }
+:root.theme-light .footer-detallado { background: rgba(255,255,255,0.4); }
+
+/* High contrast tweaks (optional future) */
+@media (prefers-contrast: more) {
+  :root { --focus-ring: 0 0 0 3px #fff,0 0 0 6px #ff6b35; }
+}

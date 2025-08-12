@@ -1,0 +1,24 @@
+/* =============================================================
+   Tipografía modular escalable
+   ============================================================= */
+:root {
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+  --font-scale-ratio: 1.22;
+  --fs--2: clamp(.68rem, .72rem + .1vw, .75rem);
+  --fs--1: clamp(.78rem, .80rem + .15vw, .85rem);
+  --fs-0: clamp(.9rem, .92rem + .2vw, 1rem);
+  --fs-1: clamp(1.05rem, 1.05rem + .3vw, 1.2rem);
+  --fs-2: clamp(1.25rem, 1.2rem + .6vw, 1.5rem);
+  --fs-3: clamp(1.55rem, 1.5rem + .8vw, 1.9rem);
+  --fs-4: clamp(1.9rem, 1.8rem + 1vw, 2.4rem);
+  --fs-5: clamp(2.3rem, 2.2rem + 1.2vw, 3rem);
+  --lh-tight: 1.15; --lh-normal: 1.4; --lh-loose: 1.65;
+  --tracking-tight: -0.02em; --tracking-normal: 0; --tracking-wide: 0.04em;
+}
+.body-text { font-size: var(--fs-0); line-height: var(--lh-normal); }
+.h1, h1 { font-size: var(--fs-5); line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
+.h2, h2 { font-size: var(--fs-4); line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
+.h3, h3 { font-size: var(--fs-3); }
+.small { font-size: var(--fs--1); }
+.muted { color: var(--text-muted); }
+strong { font-weight: 600; }

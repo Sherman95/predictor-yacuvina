@@ -335,10 +335,8 @@ header h1 {
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 3rem;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #fff;
+  text-shadow: 0 4px 30px rgba(0,0,0,.45), 0 0 12px rgba(255,255,255,.25);
 }
 
 .info-grid {
@@ -2064,7 +2062,7 @@ header h1 {
 .galeria-container {
   margin-top: 6rem;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(22px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--border-radius);
   padding: 3rem;
@@ -2096,10 +2094,7 @@ header h1 {
   font-weight: 700;
   margin-bottom: 2.5rem;
   text-align: center;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .actividades-container ul {
@@ -2111,13 +2106,13 @@ header h1 {
 
 .actividades-container li {
   background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   margin-bottom: 1.5rem;
   padding: 1.5rem 2rem;
   border-radius: 15px;
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   line-height: 1.7;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -2138,7 +2133,7 @@ header h1 {
 
 .actividades-container li:hover {
   transform: translateX(10px);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .actividades-container li:hover::before {

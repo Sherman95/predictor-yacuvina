@@ -1,0 +1,15 @@
+/* =============================================================
+   Versión reducida de animaciones pesadas
+   Activa añadiendo la clase .reduce-anim al <html> (futuro toggle)
+   ============================================================= */
+:root.reduce-anim .sunset-icon,
+:root.reduce-anim .sunset-icon-large,
+:root.reduce-anim [class*="icon-mar-nubes"],
+:root.reduce-anim [class*="icon-atardecer-despejado"],
+:root.reduce-anim [class*="icon-mixto"] {
+  animation-duration: 1.5s !important;
+  animation-iteration-count: 1 !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+:root.reduce-anim .card { animation: fadeInUp .4s ease-out !important; }

@@ -1,17 +1,17 @@
 {
   "data": {
-    "temperatura": 14,
-    "sensacionTermica": 13,
-    "humedad": 76,
-    "presion": 1018,
+    "temperatura": 13,
+    "sensacionTermica": 12,
+    "humedad": 87,
+    "presion": 1015,
     "visibilidad": 10,
-    "velocidadViento": 8,
-    "direccionViento": 105,
+    "velocidadViento": 4,
+    "direccionViento": 109,
     "direccionVientoTexto": "ESE",
-    "nubosidad": 57,
+    "nubosidad": 50,
     "condicionPrincipal": "Clouds",
-    "descripcion": "muy nuboso",
-    "icono": "04n",
+    "descripcion": "nubes dispersas",
+    "icono": "03n",
     "coordenadas": {
       "lat": -3.5729,
       "lon": -79.6893
@@ -20,27 +20,28 @@
     "pais": "EC",
     "zonaHoraria": -18000,
     "fuente": "OpenWeatherMap",
-    "timestamp": 1754444106000,
-    "fechaLocal": "5 ago 2025, 8:35 p. m.",
+    "timestamp": 1754964844000,
+    "fechaLocal": "11 ago 2025, 9:14 p. m.",
     "api": "OpenWeatherMap",
     "evaluacionYacuvina": {
-      "puntuacion": 72,
+      "puntuacion": 65,
       "categoria": "Bueno",
       "factoresPositivos": [
-        "Temperatura ideal (14°C)",
+        "Temperatura ideal (13°C)",
         "Excelente visibilidad (10 km)",
-        "Parcialmente nublado (57%)",
-        "Viento suave (8 km/h)",
-        "Humedad moderada (76%)"
+        "Parcialmente nublado (50%)",
+        "Viento suave (4 km/h)"
       ],
-      "factoresNegativos": [],
+      "factoresNegativos": [
+        "Humedad alta (87%)"
+      ],
       "recomendacion": "Muy buenas condiciones para el atardecer.",
       "colorIndicador": "#8BC34A"
     },
     "esCache": false,
-    "ultimaActualizacion": "2025-08-06T01:35:03.118Z",
-    "proximaActualizacion": "9:35 p. m."
+    "ultimaActualizacion": "2025-08-12T02:13:53.188Z",
+    "proximaActualizacion": "10:13 p. m."
   },
-  "timestamp": 1754444103653,
-  "lastUpdate": "2025-08-06T01:35:03.653Z"
+  "timestamp": 1754964833701,
+  "lastUpdate": "2025-08-12T02:13:53.701Z"
 }

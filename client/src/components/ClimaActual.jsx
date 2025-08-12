@@ -99,7 +99,7 @@ const ClimaActual = () => {
           <span className="error-icon">⚠️</span>
           <h3>Error al cargar clima</h3>
           <p>{error}</p>
-          <button onClick={fetchClimaActual} className="retry-button">
+          <button onClick={fetchClimaActual} className="btn-primary" type="button">
             🔄 Reintentar
           </button>
         </div>
@@ -268,10 +268,12 @@ const ClimaActual = () => {
           
           <button 
             onClick={fetchClimaActual} 
-            className="actualizar-button"
+            className="btn-primary"
             disabled={cargando}
+            type="button"
+            aria-busy={cargando ? 'true' : 'false'}
           >
-            🔄 Actualizar
+            {cargando ? 'Actualizando…' : '🔄 Actualizar'}
           </button>
         </div>
       </div>
