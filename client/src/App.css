@@ -226,6 +226,74 @@ header {
   overflow: hidden;
 }
 
+/* Variante plana (sin card) */
+.header-container.header-flat {
+  background: none;
+  backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  padding: 1.5rem 0 2rem;
+  border-radius: 0;
+}
+.header-container.header-flat::before { display: none; }
+
+/* Hero minimal con layout fluido */
+header.hero-minimal {
+  margin-bottom: 2.2rem;
+}
+header.hero-minimal h1 {
+  text-shadow: 0 4px 32px rgba(0,0,0,.55);
+}
+/* (Hero cinematográfico removido; revertido a card original) */
+/* Premium mobile refinements */
+@media (max-width:768px){
+  .header-left { width:100%; }
+  .micro-tagline { font-size:.62rem; letter-spacing:1.8px; text-transform:uppercase; opacity:.6; margin:.15rem 0 .6rem; font-weight:600; background:linear-gradient(90deg,#ffd3a1,#ffffff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .header-capsule { position:relative; }
+  .header-capsule::after { content:""; position:absolute; inset:-1px; border-radius:inherit; padding:1px; background:linear-gradient(140deg, rgba(255,180,71,.65), rgba(255,107,53,.4), rgba(255,180,71,.65)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; opacity:.55; }
+  .header-capsule { box-shadow:0 4px 22px -6px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.05); }
+  .alg-status { background:rgba(255,255,255,.08); }
+  .header-split-inner { gap:1.4rem; }
+  .titulo-split { line-height:1.05; }
+  .titulo-split::before { filter:blur(24px); opacity:.9; }
+  .alg-status { position:relative; overflow:hidden; }
+  .alg-status::before { content:""; position:absolute; inset:0; background:linear-gradient(100deg, rgba(255,255,255,.15), rgba(255,255,255,0) 60%); opacity:.35; pointer-events:none; }
+}
+@media (max-width:520px){
+  .micro-tagline { letter-spacing:1.2px; margin-top:.1rem; }
+  .header-capsule { padding:.5rem .75rem; }
+  .header-capsule::after { opacity:.65; }
+  .header-split-inner { gap:1.1rem; }
+  .titulo-split { font-size:clamp(2rem, 10vw, 2.8rem); }
+  .titulo-split::before { width:50%; left:25%; }
+  .pulse-dot { animation-duration:2.6s; }
+}
+.header-container.header-flat .subtitulo { margin-bottom: .75rem; }
+.header-container.header-flat .tipos-atardecer-info { margin: .75rem 0 .5rem; gap: 1rem; }
+.header-container.header-flat .tipo-info.minimal {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px) saturate(160%);
+  padding: .55rem 1rem;
+  font-weight: 500;
+  box-shadow: 0 6px 24px -12px rgba(0,0,0,.55);
+}
+.header-container.header-flat .tipo-info.minimal:hover { transform: translateY(-3px); }
+.header-container.header-flat .actualizado { margin-top: .4rem; }
+
+/* Opción ultra minimal (activar añadiendo .ultra) */
+.header-container.header-flat.ultra .tipo-info.minimal { background: none; border: none; box-shadow: none; backdrop-filter:none; padding:0; }
+.header-container.header-flat.ultra .tipos-atardecer-info { gap:.6rem; }
+.header-container.header-flat.ultra .separador { font-size:1rem; }
+
+@media (max-width: 768px) {
+  .header-container.header-flat { padding: 1.1rem 0 1.6rem; }
+  .header-container.header-flat .tipos-atardecer-info { gap:.75rem; }
+  .header-container.header-flat .tipo-info.minimal { padding:.5rem .9rem; font-size:.8rem; }
+  .header-container.header-flat .subtitulo { font-size:1rem; }
+  .header-container.header-flat h1 { font-size: clamp(2.2rem, 8.5vw, 3.2rem); }
+}
+
 .header-container::before {
   content: '';
   position: absolute;
@@ -2457,8 +2525,115 @@ header h1 {
   }
 
   .footer-detallado {
-    padding: 3rem 1.5rem 2rem;
+    padding: 2.2rem 1.25rem 1.6rem;
+    margin-top: 5rem;
   }
+  .footer-contenido { gap: 1.6rem; margin-bottom: 2rem; }
+  .footer-detallado h3 { font-size: 1.25rem; margin-bottom: .85rem; }
+  .footer-detallado h4 { font-size: 1rem; margin-bottom: .65rem; }
+  .footer-detallado p { font-size: .78rem; line-height: 1.45; margin-bottom: .6rem; }
+  .footer-links { gap: .85rem; margin-top: .6rem; }
+  .footer-links a { padding: .45rem .75rem; font-size: .75rem; border-radius: 14px; }
+  .footer-links a svg { width: 18px; height: 18px; }
+  .footer-identidad .footer-titulo { font-size: .72rem; opacity: .85; }
+  .footer-identidad .footer-universidad { font-size: .7rem; opacity: .65; }
+  .footer-creditos-proyecto p strong { display:block; margin-bottom:.2rem; }
+  .footer-creditos-proyecto { padding: .4rem 0 .2rem; }
+  .footer-contacto { padding-top:.3rem; }
+  .footer-detallado .footer-nombre { letter-spacing:.5px; }
+  .footer-detallado::before { height:1px; }
+  .footer-detallado { backdrop-filter: blur(14px); }
+  .footer-detallado { border-top:1px solid rgba(255,255,255,.15); }
+  .footer-contenido > div { background:rgba(255,255,255,0.04); padding:.6rem .75rem .9rem; border:1px solid rgba(255,255,255,0.06); border-radius:18px; }
+  .footer-contenido > div:not(:last-child) { box-shadow:0 4px 18px -8px rgba(0,0,0,.5); }
+  .footer-contenido > div:has(.footer-links) { padding-bottom:1rem; }
+  .footer-contenido > div h4 { background:none; -webkit-text-fill-color:var(--text-primary); }
+  .footer-contenido > div h3 { background:none; -webkit-text-fill-color:var(--text-primary); }
+  .footer-contenido > div p strong { background:var(--gradient-primary); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .footer-links a { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); }
+  .footer-links a:hover { background:rgba(255,255,255,.15); transform:translateY(-2px); }
+  .footer-detallado { animation:none; }
+  .footer-detallado { position:relative; }
+  .footer-detallado::after { content:""; position:absolute; inset:0; backdrop-filter:blur(0); pointer-events:none; }
+  .footer-detallado { font-size:0; }
+  .footer-detallado * { font-size:initial; }
+  .footer-detallado { box-shadow:0 -10px 40px -15px rgba(0,0,0,.55); }
+  .footer-detallado .footer-creditos-proyecto p { font-size:.72rem; }
+  .footer-detallado .footer-creditos-proyecto h4 { font-size:.9rem; }
+  .footer-detallado .footer-contacto h4 { font-size:.9rem; }
+  .footer-detallado .footer-identidad h3 { font-size:1.15rem; }
+  .footer-detallado .footer-identidad p { font-size:.7rem; }
+  .footer-detallado .footer-links a { font-size:0; }
+  .footer-detallado .footer-links a svg { display:block; }
+  .footer-detallado .footer-links a:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(255,255,255,.55),0 0 0 5px rgba(255,107,53,.45); }
+  .footer-detallado .footer-links a { transition:background .35s, transform .35s, box-shadow .35s; }
+  .footer-detallado .footer-links a:hover { box-shadow:0 6px 22px -6px rgba(0,0,0,.55); }
+  .footer-detallado .footer-links a:active { transform:translateY(0); box-shadow:0 2px 10px -4px rgba(0,0,0,.5); }
+  .footer-detallado .footer-links a svg { filter:drop-shadow(0 2px 4px rgba(0,0,0,.4)); }
+  .footer-detallado .footer-creditos-proyecto strong { font-size:.7rem; }
+  .footer-detallado .footer-creditos-proyecto p { margin-bottom:.4rem; }
+  .footer-detallado .footer-contacto { margin-top:.4rem; }
+  .footer-detallado .footer-contacto .footer-links { margin-top:.4rem; }
+  .footer-detallado .footer-creditos-proyecto { margin-top:.3rem; }
+  .footer-detallado .footer-identidad { margin-top:.2rem; }
+  .footer-detallado .footer-creditos-proyecto, .footer-detallado .footer-contacto, .footer-detallado .footer-identidad { backdrop-filter:blur(6px); }
+  .footer-detallado .footer-creditos-proyecto { background:linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)); }
+  .footer-detallado .footer-contacto { background:linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)); }
+  .footer-detallado .footer-identidad { background:linear-gradient(145deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)); }
+  .footer-detallado .footer-links a { backdrop-filter:blur(4px); }
+  .footer-detallado .footer-links a:hover { backdrop-filter:blur(6px); }
+  .footer-detallado .footer-links a:active { backdrop-filter:blur(3px); }
+  .footer-detallado .footer-links a { border-radius:12px; }
+  .footer-detallado .footer-links a { min-width:42px; display:flex; align-items:center; justify-content:center; }
+  .footer-detallado .footer-links { gap:.65rem; }
+  .footer-detallado { border-top-left-radius:30px; border-top-right-radius:30px; }
+  .footer-detallado .footer-creditos-proyecto strong { letter-spacing:.5px; }
+  .footer-detallado .footer-links a svg { width:20px; height:20px; }
+  .footer-detallado .footer-identidad .footer-titulo { margin-bottom:.25rem; }
+  .footer-detallado .footer-identidad .footer-universidad { margin-bottom:.25rem; }
+  .footer-detallado .footer-creditos-proyecto h4, .footer-detallado .footer-contacto h4 { margin-top:.2rem; }
+  .footer-detallado .footer-creditos-proyecto h4 { letter-spacing:.5px; }
+  .footer-detallado .footer-contacto h4 { letter-spacing:.5px; }
+  .footer-detallado .footer-creditos-proyecto p:last-child { margin-bottom:.2rem; }
+  .footer-detallado .footer-links a { box-shadow:0 4px 14px -6px rgba(0,0,0,.45); }
+  .footer-detallado .footer-links a:hover { box-shadow:0 8px 22px -8px rgba(0,0,0,.55); }
+  .footer-detallado .footer-links a:active { box-shadow:0 2px 10px -4px rgba(0,0,0,.5); }
+  .footer-detallado .footer-links a svg { transition:transform .45s; }
+  .footer-detallado .footer-links a:hover svg { transform:scale(1.1); }
+  .footer-detallado .footer-links a:active svg { transform:scale(.95); }
+  .footer-detallado .footer-creditos-proyecto strong { display:inline-block; }
+  .footer-detallado .footer-links a { font-weight:600; }
+  .footer-detallado .footer-creditos-proyecto p strong { background:none; -webkit-text-fill-color:inherit; }
+  .footer-detallado .footer-links a { font-size:0; }
+  .footer-detallado .footer-links a span { display:none; }
+  .footer-detallado .footer-links a svg { margin:0; }
+  .footer-detallado .footer-links a { padding:.55rem; }
+  .footer-detallado .footer-links a { min-height:42px; }
+  .footer-detallado .footer-links a { line-height:0; }
+  .footer-detallado .footer-links a { letter-spacing:0; }
+  .footer-detallado .footer-links a { font-variant:normal; }
+  .footer-detallado .footer-links a { text-transform:none; }
+  .footer-detallado .footer-links a { white-space:nowrap; }
+  .footer-detallado .footer-links a { font-family:inherit; }
+  .footer-detallado .footer-links a { background-clip:padding-box; }
+  .footer-detallado .footer-links a { position:relative; }
+  .footer-detallado .footer-links a { isolation:isolate; }
+  .footer-detallado .footer-links a { overflow:hidden; }
+  .footer-detallado .footer-links a::after { content:""; position:absolute; inset:0; background:linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0)); opacity:0; transition:opacity .35s; }
+  .footer-detallado .footer-links a:hover::after { opacity:1; }
+  .footer-detallado .footer-links a:active::after { opacity:.4; }
+  .footer-detallado .footer-links a { outline:none; }
+  .footer-detallado .footer-links a:focus-visible::after { opacity:1; box-shadow:0 0 0 3px rgba(255,255,255,.55); }
+  .footer-detallado .footer-links a { backdrop-filter:blur(5px); }
+  .footer-detallado .footer-links a { -webkit-tap-highlight-color:transparent; }
+  .footer-detallado .footer-links a { touch-action:manipulation; }
+  .footer-detallado .footer-links a { will-change:transform; }
+  .footer-detallado .footer-links a { contain:paint; }
+  .footer-detallado .footer-links a svg { pointer-events:none; }
+  .footer-detallado .footer-links a svg { user-select:none; }
+  .footer-detallado .footer-links a svg { -webkit-user-drag:none; }
+  .footer-detallado .footer-links a svg { shape-rendering:geometricPrecision; }
+  .footer-detallado .footer-links a svg { text-rendering:geometricPrecision; }
 
   .footer-contenido {
     grid-template-columns: 1fr;
@@ -2534,6 +2709,32 @@ header h1 {
   position: relative;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.clima-actual-card.compacto { padding:1.4rem 1.25rem 1.3rem; }
+.clima-actual-card.compacto .evaluacion-recomendacion,
+.clima-actual-card.compacto .clima-detalles,
+.clima-actual-card.compacto .factores-evaluacion,
+.clima-actual-card.compacto .clima-footer { display:none; }
+.clima-actual-container.sin-datos .clima-error { background:var(--glass-bg); border:1px solid rgba(255,255,255,.15); border-radius:18px; backdrop-filter:blur(18px); }
+.clima-actual-card .clima-acciones { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-top:.3rem; }
+.toggle-detalles-btn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.25); color:var(--text-primary); padding:.55rem 1rem; border-radius:14px; font-size:.7rem; font-weight:600; letter-spacing:.5px; cursor:pointer; backdrop-filter:blur(8px); transition:background .35s, transform .35s; }
+.toggle-detalles-btn:hover { background:rgba(255,255,255,.18); transform:translateY(-2px); }
+.btn-refresh-clima { background:linear-gradient(135deg,#ff6b35,#ffb347); border:none; color:#fff; padding:.55rem .8rem; border-radius:12px; font-size:.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px -4px rgba(0,0,0,.55); transition:filter .35s, transform .35s; }
+.btn-refresh-clima:hover { filter:brightness(1.1); transform:translateY(-2px); }
+.btn-refresh-clima:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.clima-actual-card.expandido { padding-top:1.6rem; }
+.clima-actual-card.expandido .clima-footer { display:flex; }
+.clima-actual-card .evaluacion-yacuvina.basica .evaluacion-badge { animation:none; }
+
+@media (max-width:768px){
+  .clima-actual-card.compacto .temperatura-valor { font-size:2.2rem; }
+  .clima-actual-card.compacto .temperatura-principal { gap:.9rem; }
+  .clima-actual-card.compacto .clima-principal { margin-bottom:.8rem; }
+  .clima-actual-card.compacto .evaluacion-badge { padding:.6rem .9rem; gap:.2rem; }
+  .clima-actual-card.compacto .evaluacion-categoria { font-size:.9rem; }
+  .clima-actual-card.compacto .evaluacion-puntaje { font-size:.7rem; }
+  .toggle-detalles-btn { flex:1; }
+  .btn-refresh-clima { padding:.5rem .65rem; }
 }
 
 .clima-actual-card:hover {

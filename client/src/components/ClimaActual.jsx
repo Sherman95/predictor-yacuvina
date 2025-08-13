@@ -5,6 +5,8 @@ const ClimaActual = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [ultimaActualizacion, setUltimaActualizacion] = useState(null);
+  // Estado de expansión debe declararse al inicio para respetar las reglas de hooks
+  const [expandido, setExpandido] = useState(false);
 
   const fetchClimaActual = async () => {
     try {
@@ -34,10 +36,12 @@ const ClimaActual = () => {
 
   useEffect(() => {
     fetchClimaActual();
-    
     // Actualizar cada 5 minutos para mostrar datos frescos
     const interval = setInterval(fetchClimaActual, 5 * 60 * 1000);
-    
+    // Auto expandir en desktop la primera vez (UX: mostrar más en pantallas grandes)
+    if (window.innerWidth >= 900) {
+      setExpandido(true);
+    }
     return () => clearInterval(interval);
   }, []);
 
@@ -108,14 +112,24 @@ const ClimaActual = () => {
   }
 
   if (!climaActual) {
-    return null;
+    return (
+      <div className="clima-actual-container sin-datos" role="region" aria-live="polite">
+        <div className="clima-error" style={{padding:'1.5rem', textAlign:'center'}}>
+          <h3 style={{marginTop:0}}>Sin datos de clima</h3>
+          <p style={{margin:'0 0 1rem'}}>No se pudo obtener información en este momento.</p>
+          <button onClick={fetchClimaActual} className="btn-primary" type="button">
+            🔄 Reintentar
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const { evaluacionYacuvina } = climaActual;
 
   return (
     <div className="clima-actual-container">
-      <div className="clima-actual-card">
+  <div className={`clima-actual-card ${expandido ? 'expandido' : 'compacto'}`} aria-expanded={expandido} role="group" aria-label="Clima actual">
         {/* Header del clima actual */}
         <div className="clima-header">
           <div className="clima-titulo">
@@ -139,7 +153,7 @@ const ClimaActual = () => {
         </div>
 
         {/* Información principal del clima */}
-        <div className="clima-principal">
+  <div className="clima-principal">
           <div className="temperatura-principal">
             <img 
               src={obtenerIconoClima(climaActual.icono, climaActual.descripcion)}
@@ -164,7 +178,7 @@ const ClimaActual = () => {
           </div>
 
           {/* Evaluación para Yacuviña */}
-          <div className="evaluacion-yacuvina">
+          <div className="evaluacion-yacuvina basica">
             <div 
               className="evaluacion-badge"
               style={{ 
@@ -175,11 +189,12 @@ const ClimaActual = () => {
               <span className="evaluacion-categoria">{evaluacionYacuvina.categoria}</span>
               <span className="evaluacion-puntaje">{evaluacionYacuvina.puntuacion}/100</span>
             </div>
-            <p className="evaluacion-recomendacion">{evaluacionYacuvina.recomendacion}</p>
+            {expandido && <p className="evaluacion-recomendacion">{evaluacionYacuvina.recomendacion}</p>}
           </div>
         </div>
 
-        {/* Detalles del clima */}
+        {/* Detalles del clima (solo si expandido) */}
+        {expandido && (
         <div className="clima-detalles">
           <div className="detalle-grid">
             <div className="detalle-item">
@@ -233,9 +248,10 @@ const ClimaActual = () => {
             )}
           </div>
         </div>
+        )}
 
         {/* Factores de evaluación */}
-        {evaluacionYacuvina.factoresPositivos?.length > 0 && (
+        {expandido && evaluacionYacuvina.factoresPositivos?.length > 0 && (
           <div className="factores-evaluacion">
             <h4>✅ Factores Positivos</h4>
             <ul className="factores-lista positivos">
@@ -246,7 +262,7 @@ const ClimaActual = () => {
           </div>
         )}
 
-        {evaluacionYacuvina.factoresNegativos?.length > 0 && (
+        {expandido && evaluacionYacuvina.factoresNegativos?.length > 0 && (
           <div className="factores-evaluacion">
             <h4>⚠️ Factores a Considerar</h4>
             <ul className="factores-lista negativos">
@@ -257,25 +273,38 @@ const ClimaActual = () => {
           </div>
         )}
 
-        {/* Footer con información de actualización */}
-        <div className="clima-footer">
-          <div className="fuente-info">
-            <span className="fuente-badge">📡 {climaActual.fuente || 'API'}</span>
-            <span className="proxima-actualizacion">
-              Próxima actualización: {climaActual.proximaActualizacion}
-            </span>
-          </div>
-          
-          <button 
-            onClick={fetchClimaActual} 
-            className="btn-primary"
-            disabled={cargando}
+        <div className="clima-acciones">
+          <button
             type="button"
-            aria-busy={cargando ? 'true' : 'false'}
+            className="toggle-detalles-btn"
+            onClick={() => setExpandido(e => !e)}
+            aria-controls="detalles-clima"
+            aria-expanded={expandido}
+            aria-label={expandido ? 'Ocultar detalles del clima' : 'Mostrar más detalles del clima'}
           >
-            {cargando ? 'Actualizando…' : '🔄 Actualizar'}
+            {expandido ? '▲ Menos detalles' : '▼ Más detalles'}
           </button>
+          <button 
+              onClick={fetchClimaActual} 
+              className="btn-refresh-clima"
+              disabled={cargando}
+              type="button"
+              aria-busy={cargando ? 'true' : 'false'}
+              aria-label="Actualizar clima"
+            >
+              {cargando ? '...' : '🔄'}
+            </button>
         </div>
+        {expandido && (
+          <div className="clima-footer" id="detalles-clima">
+            <div className="fuente-info">
+              <span className="fuente-badge">📡 {climaActual.fuente || 'API'}</span>
+              <span className="proxima-actualizacion">
+                Próxima actualización: {climaActual.proximaActualizacion}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
