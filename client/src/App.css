@@ -74,7 +74,8 @@ html {
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   /* Using CSS var so JS can swap if needed & relative path fallback for iOS */
-  --yacuvina-bg: url('./yacuvinaWallpaper.jpg');
+  /* Usar ruta absoluta del directorio public para compatibilidad desktop */
+  --yacuvina-bg: url('/yacuvinaWallpaper.jpg');
   background: 
     linear-gradient(135deg, rgba(26, 11, 46, 0.6) 0%, rgba(57, 0, 153, 0.4) 100%),
     var(--yacuvina-bg);
@@ -95,6 +96,11 @@ body {
   @media (max-width: 900px) {
     body { background-attachment: scroll; }
   }
+}
+
+/* Desktop refuerzo: asegurar fixed y variable en pantallas grandes */
+@media (min-width: 901px) {
+  body { background-attachment: fixed; background-image: linear-gradient(135deg, rgba(26, 11, 46, 0.6) 0%, rgba(57, 0, 153, 0.4) 100%), var(--yacuvina-bg); }
 }
 
 /* Overlay sutil para realzar los colores de atardecer sobre la imagen real */
