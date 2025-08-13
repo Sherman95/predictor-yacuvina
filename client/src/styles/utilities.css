@@ -171,14 +171,21 @@
   .clima-actual-container { margin:1.5rem 0 2.5rem; }
 }
 
+/* Ghost padding control */
+.ghost-pad { display:none; }
+@media (max-width:680px){
+  .ghost-pad { flex:0 0 7%; scroll-snap-align:none; display:block; }
+}
+
 /* ===== Enhanced Forecast Carousel (mobile) ===== */
 @media (max-width:680px) {
   .pronostico-grid { position:relative; padding-top:.75rem; padding-bottom:1.4rem; scroll-padding-left:12%; scroll-padding-right:12%; }
-  .pronostico-grid::before, .pronostico-grid::after { content:""; position:absolute; top:0; bottom:0; width:46px; z-index:3; pointer-events:none; }
-  .pronostico-grid::before { left:0; background:linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,0)); }
-  .pronostico-grid::after { right:0; background:linear-gradient(-90deg, rgba(0,0,0,.55), rgba(0,0,0,0)); }
+  /* Side fade gradients removed to evitar efecto de recuadro oscuro en la primera tarjeta */
+  .pronostico-grid::before, .pronostico-grid::after { content:none !important; }
   .pronostico-grid .forecast-card { transform:translateX(0); opacity:.92; transition:box-shadow .45s, background .45s, opacity .45s, transform .55s; border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(18px) saturate(140%); background:linear-gradient(155deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03)); padding:1.15rem 1.1rem 1.2rem; border-radius:22px; position:relative; }
   .pronostico-grid .forecast-card::after { content:""; position:absolute; inset:0; border-radius:inherit; padding:1px; background:linear-gradient(140deg,rgba(255,107,53,.55),rgba(199,125,255,.35)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; opacity:.6; pointer-events:none; }
+    /* Vignette / gradient frame removed per request */
+    .pronostico-grid .forecast-card::after { content:none !important; }
   .pronostico-grid .forecast-card.is-visible { opacity:1; box-shadow:0 10px 30px -10px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.2); transform:translateY(-4px); }
   .pronostico-grid .forecast-card h2 { font-size:.95rem; margin:0 0 .15rem; letter-spacing:.5px; }
   .pronostico-grid .forecast-card .fecha { font-size:.60rem; opacity:.65; margin:0 0 .35rem; font-weight:500; }

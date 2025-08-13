@@ -5,17 +5,16 @@ import React from 'react';
 function Header({ actualizado, isRefreshing }) {
   return (
     <header>
-      <div className="header-container">
+      <div className="header-container" role="banner">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
           <div>
             <h1>Pronóstico de Atardeceres en Yacuviña</h1>
             <p className="subtitulo">Análisis especializado con <strong>Algoritmo Yacuviña 3.0</strong></p>
           </div>
-        
         </div>
-        <div className="tipos-atardecer-info">
+        <div className="tipos-atardecer-info" aria-label="Tipos de atardecer evaluados">
           <span className="tipo-info">☁️ Mar de Nubes</span>
-          <span className="separador">•</span>
+            <span className="separador" aria-hidden="true">•</span>
           <span className="tipo-info">🌅 Atardecer Despejado</span>
         </div>
         {actualizado && (
