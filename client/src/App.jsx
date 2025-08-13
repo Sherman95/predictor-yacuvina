@@ -18,6 +18,8 @@ import imagen1 from './assets/yacuvina1.jpg';
 import imagen2 from './assets/yacuvina2.jpg';
 import imagen3 from './assets/yacuvina3.jpg';
 import imagen4 from './assets/yacuvina4.png';
+// Fondo principal (ruta pública) para asegurar carga en iOS / producción
+import wallpaper from '/yacuvinaWallpaper.jpg';
 const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
 
 
@@ -59,6 +61,8 @@ function App() {
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  // Set dynamic CSS var for background (Vite reescribe path hashed si aplica)
+  try { document.documentElement.style.setProperty('--yacuvina-bg', `url(${wallpaper})`); } catch {}
     const fetchPronostico = () => {
       if (!cargando) {
         setIsRefreshing(true);

@@ -73,9 +73,11 @@ html {
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Using CSS var so JS can swap if needed & relative path fallback for iOS */
+  --yacuvina-bg: url('./yacuvinaWallpaper.jpg');
   background: 
     linear-gradient(135deg, rgba(26, 11, 46, 0.6) 0%, rgba(57, 0, 153, 0.4) 100%),
-    url('/yacuvinaWallpaper.jpg');
+    var(--yacuvina-bg);
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -86,6 +88,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   position: relative;
+}
+
+/* iOS fix: background-attachment: fixed provoca que no se renderice la imagen en Safari iOS */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 900px) {
+    body { background-attachment: scroll; }
+  }
 }
 
 /* Overlay sutil para realzar los colores de atardecer sobre la imagen real */
