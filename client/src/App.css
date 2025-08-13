@@ -91,6 +91,10 @@ body {
   position: relative;
 }
 
+/* Capa de fondo dedicada (mejora compatibilidad iOS) */
+#bg-layer { position:fixed; inset:0; z-index:-2; background:linear-gradient(135deg, rgba(26,11,46,0.6) 0%, rgba(57,0,153,0.4) 100%), var(--yacuvina-bg) center/cover no-repeat; }
+@media (max-width:900px) { #bg-layer { background-attachment:scroll; } }
+
 /* iOS fix: background-attachment: fixed provoca que no se renderice la imagen en Safari iOS */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 900px) {

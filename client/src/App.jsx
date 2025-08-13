@@ -63,6 +63,19 @@ function App() {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
   // Set dynamic CSS var for background (Vite reescribe path hashed si aplica)
   try { document.documentElement.style.setProperty('--yacuvina-bg', `url(${wallpaper})`); } catch {}
+    // Diagnóstico: log si falla la carga del fondo
+    setTimeout(() => {
+      try {
+        const cs = getComputedStyle(document.documentElement);
+        // eslint-disable-next-line no-console
+        console.log('[BG DIAG] --yacuvina-bg =', cs.getPropertyValue('--yacuvina-bg'));
+        const layer = document.getElementById('bg-layer');
+        if (layer) {
+          // eslint-disable-next-line no-console
+          console.log('[BG DIAG] layer background:', layer.style.background);
+        }
+      } catch {}
+    }, 0);
     const fetchPronostico = () => {
       if (!cargando) {
         setIsRefreshing(true);
@@ -120,6 +133,8 @@ function App() {
 
   return (
     <div className="app-container" data-theme={theme}>
+      {/* Capa de fondo dedicada para iOS/Safari que ignora background-attachment issues */}
+      <div id="bg-layer" aria-hidden="true"></div>
       {/* ===== INICIO DEL BLOQUE CORREGIDO ===== */}
       {imagenSeleccionada && (
         <div className="visor-overlay" onClick={() => setImagenSeleccionada(null)}>
