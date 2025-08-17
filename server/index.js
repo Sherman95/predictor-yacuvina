@@ -16,6 +16,37 @@ if (!config.apiKeys.openWeather || !config.apiKeys.accuweather) {
 
 const app = express();
 
+// ================= VISITAS SIMPLE (IN-MEMORIA) =================
+// Cuenta total y "únicos" (IP+UA) por día. No persiste en disco para mantenerlo liviano.
+const visitas = { fecha: null, total: 0, unicos: 0, claves: new Set(), rutas: {} };
+function resetSiNuevoDia() {
+    const hoy = new Date().toISOString().slice(0,10);
+    if (visitas.fecha !== hoy) {
+        visitas.fecha = hoy; visitas.total = 0; visitas.unicos = 0; visitas.claves = new Set(); visitas.rutas = {}; }
+}
+app.use((req, _res, next) => {
+    // Solo contar peticiones GET (evita dobles por CORS preflight)
+    if (req.method === 'GET') {
+        resetSiNuevoDia();
+        const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+        const ua = (req.headers['user-agent'] || '').slice(0,40);
+        const clave = ip + '|' + ua;
+        visitas.total += 1;
+        if (!visitas.claves.has(clave)) { visitas.claves.add(clave); visitas.unicos += 1; }
+        visitas.rutas[req.path] = (visitas.rutas[req.path] || 0) + 1;
+    }
+    next();
+});
+
+// Endpoint protegido con token en header x-admin-token (configura ADMIN_TOKEN en Render)
+app.get('/api/_stats/visitas', (req, res) => {
+    if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
+        return res.status(401).json({ error: 'No autorizado' });
+    }
+    res.json({ fecha: visitas.fecha, total: visitas.total, unicos: visitas.unicos, rutas: visitas.rutas });
+});
+// ===============================================================
+
 // Configuración de CORS para producción
 const corsOptions = {
     origin: [
