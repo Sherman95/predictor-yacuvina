@@ -1,75 +1,99 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0a0f1c" />
   <title>Yacuvina Stats Dashboard</title>
-  <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <!-- Tailwind CDN -->
+  <script>
+    window.tailwind.config = { theme:{ extend:{ colors:{ primary:'#0ea5e9', accent:'#6366f1', neon:'#06b6d4', glass:'#1e293b' }, boxShadow:{ glow:'0 0 15px -3px rgba(14,165,233,.6),0 0 30px -5px rgba(99,102,241,.35)' } } } };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script defer src="script.js"></script>
 </head>
-<body>
-  <header>
-    <h1>📊 Yacuvina Stats</h1>
-    <div class="controls">
-      <input id="baseUrl" placeholder="URL base API (https://tu-api.onrender.com)" />
-      <input id="adminToken" placeholder="X-Admin-Token (opcional)" />
-      <button id="loadBtn">Cargar</button>
-      <button id="autoBtn" data-active="0">Auto 30s</button>
+<body class="min-h-screen font-sans text-slate-200 bg-[#05070d] relative overflow-x-hidden">
+  <!-- Animated gradient orbs -->
+  <div class="pointer-events-none fixed inset-0 -z-10">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="noise-layer"></div>
+  </div>
+  <header class="backdrop-blur-xl bg-white/5 border-b border-white/10 sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h1 class="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent drop-shadow">📊 Yacuvina Stats <span class="text-xs font-light px-2 py-0.5 rounded-full bg-white/10 border border-white/10">v1</span></h1>
+        <div class="flex flex-wrap gap-2 items-center">
+          <input id="baseUrl" class="i-field" placeholder="https://tu-api.onrender.com" />
+          <input id="adminToken" class="i-field" placeholder="X-Admin-Token (opcional)" />
+          <button id="loadBtn" class="btn-primary">Cargar</button>
+          <button id="autoBtn" data-active="0" class="btn-secondary">Auto 30s</button>
+        </div>
+      </div>
+      <small id="status" class="text-xs text-sky-300 font-mono tracking-wide"></small>
     </div>
-    <small id="status"></small>
   </header>
 
-  <main>
-    <section class="cards" id="kpiCards"></section>
+  <main class="max-w-7xl mx-auto px-4 py-10 flex flex-col gap-14">
+    <!-- KPIs -->
+    <section id="kpiCards" class="grid gap-5 md:grid-cols-3 lg:grid-cols-6"></section>
 
-    <section>
-      <h2>Visitas por Día</h2>
-      <canvas id="visitasDia"></canvas>
-    </section>
-
-    <section class="grid2">
-      <div>
-        <h2>Visitas por Mes</h2>
-        <canvas id="visitasMes"></canvas>
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Visitas por Día</h2>
       </div>
-      <div>
-        <h2>Top Rutas (Hoy)</h2>
-        <ul id="topRutas"></ul>
+      <div class="panel-body">
+        <canvas id="visitasDia" height="140"></canvas>
       </div>
     </section>
 
-    <section class="grid2">
-      <div>
-        <h2>Geo País (Hoy)</h2>
-        <canvas id="geoPaisHoy"></canvas>
+    <section class="grid gap-8 lg:grid-cols-2">
+      <div class="panel">
+        <div class="panel-header"><h2>Visitas por Mes</h2></div>
+        <div class="panel-body"><canvas id="visitasMes" height="160"></canvas></div>
       </div>
-      <div>
-        <h2>Geo Ciudad (Hoy)</h2>
-        <canvas id="geoCiudadHoy"></canvas>
-      </div>
-    </section>
-
-    <section class="grid2">
-      <div>
-        <h2>Geo País (Histórico)</h2>
-        <canvas id="geoPaisHist"></canvas>
-      </div>
-      <div>
-        <h2>Geo Ciudad (Histórico)</h2>
-        <canvas id="geoCiudadHist"></canvas>
+      <div class="panel flex flex-col">
+        <div class="panel-header"><h2>Top Rutas (Hoy)</h2></div>
+        <div class="panel-body"><ul id="topRutas" class="space-y-2"></ul></div>
       </div>
     </section>
 
-    <details>
-      <summary>JSON Crudo</summary>
-      <pre id="rawJson"></pre>
-    </details>
+    <section class="grid gap-8 lg:grid-cols-2">
+      <div class="panel">
+        <div class="panel-header"><h2>Geo País (Hoy)</h2></div>
+        <div class="panel-body"><canvas id="geoPaisHoy" height="180"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Geo Ciudad (Hoy)</h2></div>
+        <div class="panel-body"><canvas id="geoCiudadHoy" height="180"></canvas></div>
+      </div>
+    </section>
+
+    <section class="grid gap-8 lg:grid-cols-2">
+      <div class="panel">
+        <div class="panel-header"><h2>Geo País (Histórico)</h2></div>
+        <div class="panel-body"><canvas id="geoPaisHist" height="180"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h2>Geo Ciudad (Histórico)</h2></div>
+        <div class="panel-body"><canvas id="geoCiudadHist" height="180"></canvas></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><h2>JSON Crudo</h2></div>
+      <div class="panel-body">
+        <pre id="rawJson" class="text-xs"></pre>
+      </div>
+    </section>
   </main>
 
-  <footer>
-    <small>Yacuvina Stats v1 - Dashboard externo. Actualiza cada 30s si activas Auto.</small>
+  <footer class="mt-10 py-8 text-center text-xs text-slate-500/80">
+    <p>Yacuvina Stats Dashboard externo · <span class="text-sky-400">Tiempo real</span> · Auto refresh disponible</p>
   </footer>
 </body>
 </html>
