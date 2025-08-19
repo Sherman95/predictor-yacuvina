@@ -222,10 +222,12 @@ const allowedStaticOrigins = [
 ];
 const corsOptions = {
     origin: function(origin, callback) {
-        if (!origin) return callback(null, true); // curl / same-origin
+        if (!origin) { console.log('[CORS] request sin origin (probablemente curl/postman) permitido'); return callback(null, true); }
         if (allowedStaticOrigins.includes(origin) || /https:\/\/.*\.vercel\.app$/.test(origin)) {
+            console.log('[CORS] permitido', origin);
             return callback(null, true);
         }
+        console.warn('[CORS] bloqueado', origin);
         return callback(new Error('Origen no permitido por CORS: ' + origin));
     },
     credentials: true,

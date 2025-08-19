@@ -71,31 +71,39 @@ function renderGeo(data){
 }
 
 async function load(){
-  let base = $('#baseUrl').value.trim();
+  let rawInput = $('#baseUrl').value;
+  let base = rawInput.trim();
   if(!base){ $('#status').textContent='Ingresa la URL base (ej: https://servidor.onrender.com)'; return; }
-  base = base.replace(/\/$/,'');
-  // Si el usuario pegó la ruta completa /api/_stats/visitas (una o más veces) la recortamos
+  // Normalizaciones encadenadas
+  base = base.replace(/\s+/g,''); // quitar espacios internos
+  base = base.replace(/^(https?:\/[^/]+)(.+)$/,(m,host,rest)=>{ // evitar paths previos
+    return host + rest.replace(/(\/api\/_stats\/visitas.*)$/,'');
+  });
+  // quitar repeticiones de /api/_stats/visitas al final
   base = base.replace(/(\/api\/_stats\/visitas)+\/?$/,'');
-  // Mostrar aviso si se recortó
-  if(!$('#baseUrl').value.endsWith(base)) {
-    console.info('Base URL normalizada a', base);
-  }
-  $('#baseUrl').value = base; // reflejar corrección
+  // quitar trailing slash
+  base = base.replace(/\/$/, '');
+  if(base !== rawInput){ console.info('[NORMALIZADO]', rawInput,'=>', base); }
+  $('#baseUrl').value = base;
+  localStorage.setItem('yacuvinaStatsBase', base);
   const token = $('#adminToken').value.trim();
+  if(token) localStorage.setItem('yacuvinaStatsToken', token); else localStorage.removeItem('yacuvinaStatsToken');
   const url = base + '/api/_stats/visitas';
-  $('#status').textContent = 'Cargando…';
+  $('#status').textContent = 'Cargando… ('+url+')';
   try{
-    const resp = await fetch(url, { headers: token? {'X-Admin-Token':token} : {} });
+    const resp = await fetch(url, { headers: token? {'X-Admin-Token':token} : {}, cache:'no-store' });
     if(!resp.ok){
       let hint='';
       if(resp.status===401) hint='(Token inválido o faltante)';
-      else if(resp.status===404) hint='(Revisa que la URL base NO incluya /api/_stats/visitas y que el backend esté arriba)';
-      else if(resp.status===403) hint='(CORS o bloqueo en backend)';
+      else if(resp.status===404) hint='(404: Endpoint no encontrado. ¿Base correcta? ¿Backend desplegado?)';
+      else if(resp.status===403) hint='(403: CORS bloqueado. Verifica origin en backend)';
       throw new Error('HTTP '+resp.status+' '+hint);
     }
+    const ct = resp.headers.get('content-type')||'';
+    if(!ct.includes('application/json')) throw new Error('Contenido no JSON: '+ct);
     const data = await resp.json();
     if(!data || !data.version){
-      $('#status').textContent='Respuesta inesperada (sin version). Ver consola.';
+      $('#status').textContent='Respuesta sin version. Ver consola.';
       console.warn('Payload recibido', data);
       return;
     }
@@ -107,7 +115,11 @@ async function load(){
     $('#rawJson').textContent = JSON.stringify(data,null,2);
     const ahora = new Date().toLocaleTimeString();
     $('#status').textContent = 'Última actualización ' + ahora + ' (version '+data.version+')';
+    // Actualizar badge de versión dashboard + api
+    const badge = document.getElementById('dashVersion');
+    if(badge) badge.textContent = 'dash 0.3.0 / api '+data.version;
   }catch(e){
+    console.error('Fallo load()', e);
     $('#status').textContent = 'Error: '+e.message;
   }
 }
@@ -127,7 +139,11 @@ function toggleAuto(){
 window.addEventListener('DOMContentLoaded',()=>{
   $('#loadBtn').addEventListener('click', load);
   $('#autoBtn').addEventListener('click', toggleAuto);
-  // Autorellenar dominio si detecta mismo host
-  $('#baseUrl').value = location.origin.includes('localhost') ? 'http://localhost:3001' : '';
+  // Restaurar últimos valores
+  const savedBase = localStorage.getItem('yacuvinaStatsBase');
+  const savedToken = localStorage.getItem('yacuvinaStatsToken');
+  if(savedBase) $('#baseUrl').value = savedBase; else if(location.origin.includes('localhost')) $('#baseUrl').value = 'http://localhost:3001';
+  if(savedToken) $('#adminToken').value = savedToken;
+  if(savedBase) load();
 });
 // trigger workflow deploy
