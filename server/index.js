@@ -248,8 +248,8 @@ app.use((req, res, next) => {
     });
 });
 
-// Asegurar manejo explícito opcional (redundante pero seguro)
-app.options('*', cors(corsOptions));
+// Eliminado app.options('*') porque en Express 5 path-to-regexp lanza error con '*'.
+// El middleware global de arriba ya responde OPTIONS con 204.
 
 // --- RUTAS ---
 app.use('/api/prediccion', predictionRoutes);
