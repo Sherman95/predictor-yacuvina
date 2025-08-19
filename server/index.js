@@ -1,49 +1,4 @@
-// Endpoint de verificación de integridad de visitas
-app.get('/api/_stats/integridad', (req, res) => {
-    if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
-        return res.status(401).json({ error: 'No autorizado' });
-    }
-    let historico, advertencias = [], ok = true;
-    try {
-        historico = leerHistorico();
-    } catch (e) {
-        return res.status(500).json({ ok: false, error: 'No se pudo leer visitas-historico.json', detalle: e.message });
-    }
-    // Sumar totales
-    let total = 0, unicos = 0, dias = 0, duplicados = [];
-    const diasVistos = new Set();
-    for (const [fecha, datos] of Object.entries(historico.historico)) {
-        if (diasVistos.has(fecha)) { duplicados.push(fecha); }
-        diasVistos.add(fecha);
-        if (!datos || typeof datos.total !== 'number' || typeof datos.unicos !== 'number') {
-            advertencias.push(`Día ${fecha} tiene datos corruptos o incompletos.`);
-            ok = false;
-            continue;
-        }
-        total += datos.total;
-        unicos += datos.unicos;
-        dias++;
-    }
-    if (duplicados.length > 0) {
-        advertencias.push('Fechas duplicadas: ' + duplicados.join(', '));
-        ok = false;
-    }
-    // Comprobar que los totales coinciden con el endpoint principal
-    let endpointTotales = null;
-    try {
-        endpointTotales = { total, unicos };
-    } catch {}
-    res.json({
-        ok,
-        advertencias,
-        dias,
-        total,
-        unicos,
-        endpointTotales,
-        ejemploDia: Object.entries(historico.historico)[0],
-        nota: 'Si advertencias está vacío y ok=true, la integridad es correcta.'
-    });
-});
+// (El endpoint /api/_stats/integridad se registra más abajo una vez creado 'app')
 import express from 'express';
 import cors from 'cors';
 import cron from 'node-cron';
@@ -254,6 +209,36 @@ app.use('/api/prediccion', predictionRoutes);
 app.use('/api/validacion', validationRoutes);
 app.use('/api', currentWeatherRoutes); // 🌤️ Nueva ruta para clima actual
 app.use('/api/debug', debugRoutes); // 🔍 Rutas de debugging
+
+// Endpoint de verificación de integridad de visitas (registrado tras crear 'app')
+app.get('/api/_stats/integridad', (req, res) => {
+    if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
+        return res.status(401).json({ error: 'No autorizado' });
+    }
+    let historico, advertencias = [], ok = true;
+    try {
+        historico = leerHistorico();
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: 'No se pudo leer visitas-historico.json', detalle: e.message });
+    }
+    let total = 0, unicos = 0, dias = 0, duplicados = [];
+    const diasVistos = new Set();
+    for (const [fecha, datos] of Object.entries(historico.historico)) {
+        if (diasVistos.has(fecha)) { duplicados.push(fecha); }
+        diasVistos.add(fecha);
+        if (!datos || typeof datos.total !== 'number' || typeof datos.unicos !== 'number') {
+            advertencias.push(`Día ${fecha} tiene datos corruptos o incompletos.`);
+            ok = false;
+            continue;
+        }
+        total += datos.total;
+        unicos += datos.unicos;
+        dias++;
+    }
+    if (duplicados.length > 0) { advertencias.push('Fechas duplicadas: ' + duplicados.join(', ')); ok = false; }
+    const endpointTotales = { total, unicos };
+    res.json({ ok, advertencias, dias, total, unicos, endpointTotales, ejemploDia: Object.entries(historico.historico)[0], nota: 'Si advertencias está vacío y ok=true, la integridad es correcta.' });
+});
 
 // --- INICIO DEL SERVIDOR Y TAREAS PROGRAMADAS ---
 app.listen(config.port, () => {
