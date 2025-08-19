@@ -111,7 +111,19 @@ app.get('/api/_stats/visitas', (req, res) => {
         }
         // Leer histórico y agregar el día actual
         const historico = leerHistorico();
-        historico.historico[visitas.fecha] = { total: visitas.total, unicos: visitas.unicos, rutas: visitas.rutas };
+        // Incluir también métricas de beacon y geolocalización del día actual para consistencia
+        historico.historico[visitas.fecha] = {
+            total: visitas.total,
+            unicos: visitas.unicos,
+            rutas: visitas.rutas,
+            site: { hits: beacon.total, visitors: beacon.unicos },
+            geo: {
+                porCiudad: geo.porCiudad,
+                porPais: geo.porPais,
+                uniqueCiudad: geo.uniqueCiudad,
+                uniquePais: geo.uniquePais
+            }
+        };
         // Agregación por mes y totales
         const porMes = {};
         let totalVisitas = 0, totalUnicos = 0;
