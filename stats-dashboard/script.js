@@ -74,15 +74,17 @@ async function load(){
   let rawInput = $('#baseUrl').value;
   let base = rawInput.trim();
   if(!base){ $('#status').textContent='Ingresa la URL base (ej: https://servidor.onrender.com)'; return; }
-  // Normalizaciones encadenadas
-  base = base.replace(/\s+/g,''); // quitar espacios internos
-  base = base.replace(/^(https?:\/[^/]+)(.+)$/,(m,host,rest)=>{ // evitar paths previos
-    return host + rest.replace(/(\/api\/_stats\/visitas.*)$/,'');
-  });
-  // quitar repeticiones de /api/_stats/visitas al final
-  base = base.replace(/(\/api\/_stats\/visitas)+\/?$/,'');
-  // quitar trailing slash
-  base = base.replace(/\/$/, '');
+  // Normalización simple y robusta
+  base = base.replace(/\s+/g,''); // quitar espacios
+  // Eliminar todo desde /api/_stats/visitas en adelante si aparece
+  base = base.replace(/\/api\/_stats\/visitas.*$/,'');
+  // Quitar barras finales repetidas
+  while(base.endsWith('/')) base = base.slice(0,-1);
+  // Validar formato básico
+  if(!/^https?:\/\//i.test(base)) {
+    $('#status').textContent='URL base inválida (falta http(s)://)';
+    return;
+  }
   if(base !== rawInput){ console.info('[NORMALIZADO]', rawInput,'=>', base); }
   $('#baseUrl').value = base;
   localStorage.setItem('yacuvinaStatsBase', base);
@@ -95,7 +97,7 @@ async function load(){
     if(!resp.ok){
       let hint='';
       if(resp.status===401) hint='(Token inválido o faltante)';
-      else if(resp.status===404) hint='(404: Endpoint no encontrado. ¿Base correcta? ¿Backend desplegado?)';
+  else if(resp.status===404) hint='(404: Endpoint no encontrado. Base usada='+base+')';
       else if(resp.status===403) hint='(403: CORS bloqueado. Verifica origin en backend)';
       throw new Error('HTTP '+resp.status+' '+hint);
     }
