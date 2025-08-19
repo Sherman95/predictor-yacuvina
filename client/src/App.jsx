@@ -100,6 +100,31 @@ function App() {
     return () => clearInterval(intervalId);
   }, [cargando]);
 
+  // Beacon de visita (una vez por día por dispositivo/navegador)
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const key = 'yacuvina-last-beacon';
+    const hoy = new Date().toISOString().slice(0,10);
+    let ultima = null;
+    try { ultima = localStorage.getItem(key); } catch {}
+    if (ultima === hoy) return; // ya enviado hoy
+    const url = `${apiUrl}/api/visit-beacon`;
+    const send = () => {
+      if (navigator.sendBeacon) {
+        try {
+          const blob = new Blob([JSON.stringify({ t: Date.now() })], { type: 'application/json' });
+          navigator.sendBeacon(url, blob);
+          try { localStorage.setItem(key, hoy); } catch {}
+          return;
+        } catch {}
+      }
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: Date.now() }) })
+        .then(() => { try { localStorage.setItem(key, hoy); } catch {} })
+        .catch(() => {});
+    };
+    send();
+  }, []);
+
   const mejorDia = useMemo(() => {
     if (!pronostico || pronostico.length === 0) return null;
     
