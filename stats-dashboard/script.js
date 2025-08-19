@@ -68,6 +68,20 @@ function renderGeo(data){
   pie('geoCiudadHoy','Ciudad Hoy', data.geoHoy?.porCiudad||{});
   pie('geoPaisHist','País Hist', data.geoHistorico?.porPais||{});
   pie('geoCiudadHist','Ciudad Hist', data.geoHistorico?.porCiudad||{});
+  // Tabla detalle: ciudad, hits, únicos, país (aprox si coincide nombre en keysPais)
+  const tbody = document.getElementById('geoDetalleHoy');
+  if(tbody){
+    const porCiudad = data.geoHoy?.porCiudad || {};
+    const uniqueCiudad = data.geoHoy?.uniqueCiudad || {};
+    // Para país, como geoHoy no devuelve mapping ciudad->pais directamente, intentamos deducir: si sólo hay un país, usarlo; si varios, dejamos '-'
+    const paises = Object.keys(data.geoHoy?.porPais||{});
+    const unicoPais = paises.length === 1 ? paises[0] : '';
+    const filas = Object.entries(porCiudad).sort((a,b)=>b[1]-a[1]).map(([city,hits])=>{
+      const unicos = uniqueCiudad[city] || 0;
+      return `<tr><td class="py-1 pr-4">${city}</td><td class="py-1 pr-4">${hits}</td><td class="py-1 pr-4">${unicos}</td><td class="py-1 pr-4">${unicoPais||'-'}</td></tr>`;
+    });
+    tbody.innerHTML = filas.join('') || '<tr><td class="py-2" colspan="4">Sin datos</td></tr>';
+  }
 }
 
 async function load(){
