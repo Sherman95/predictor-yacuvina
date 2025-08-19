@@ -223,34 +223,34 @@ const allowedStaticOrigins = [
 ];
 const corsOptions = {
     origin: function(origin, callback) {
-        if (!origin) { console.log('[CORS] request sin origin (probablemente curl/postman) permitido'); return callback(null, true); }
+        if (!origin) { return callback(null, true); }
         if (allowedStaticOrigins.includes(origin) || /https:\/\/.*\.vercel\.app$/.test(origin)) {
-            console.log('[CORS] permitido', origin);
             return callback(null, true);
         }
-        console.warn('[CORS] bloqueado', origin);
         return callback(new Error('Origen no permitido por CORS: ' + origin));
     },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
+    credentials: true
 };
 
-app.use((req, res, next) => {
-    cors(corsOptions)(req, res, (err) => {
-        if (err) {
-            return res.status(403).json({ error: 'CORS bloqueado', detalle: err.message });
-        }
-        // Responder de inmediato preflight OPTIONS exitoso
-        if (req.method === 'OPTIONS') {
-            return res.sendStatus(204);
-        }
-        next();
-    });
-});
+// CORS estándar para la mayoría de rutas
+app.use(cors(corsOptions));
 
-// Eliminado app.options('*') porque en Express 5 path-to-regexp lanza error con '*'.
-// El middleware global de arriba ya responde OPTIONS con 204.
+// CORS abierto específicamente para endpoint público de estadísticas (solo lectura)
+app.use((req,res,next)=>{
+    if (req.path === '/api/_stats/visitas') {
+        const origin = req.headers.origin;
+        if (origin) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Vary','Origin');
+        } else {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+        }
+        res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Admin-Token');
+        res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
+        if (req.method === 'OPTIONS') return res.sendStatus(204);
+    }
+    next();
+});
 
 // --- RUTAS ---
 app.use('/api/prediccion', predictionRoutes);
