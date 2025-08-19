@@ -4,8 +4,21 @@ import cors from 'cors';
 import cron from 'node-cron';
 import fs from 'fs';
 import path from 'path';
-// __dirname no existe en ESM; lo definimos manualmente
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+import { fileURLToPath } from 'url';
+// __dirname en ESM (compatible Windows/Linux)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Polyfill fetch (por si el runtime es < Node 18 en Render)
+let fetchFn = globalThis.fetch;
+if (!fetchFn) {
+    try {
+        const mod = await import('node-fetch');
+        fetchFn = mod.default;
+        globalThis.fetch = fetchFn;
+    } catch (e) {
+        console.warn('No se pudo cargar node-fetch, geolocalización deshabilitada:', e.message);
+    }
+}
 import { config } from './config/index.js';
 import { actualizarDatosClima } from './services/weatherService.js';
 import predictionRoutes from './routes/predictionRoutes.js';
@@ -165,8 +178,8 @@ app.post('/api/visit-beacon', async (req, res) => {
         if (cached && (now - cached.ts) < GEO_CACHE_TTL_MS) {
             ({ city, country } = cached);
         } else if (!ip.startsWith('127.') && !ip.startsWith('10.') && !ip.startsWith('192.168') && ip !== '::1') {
-            const resp = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city`);
-            if (resp.ok) {
+            const resp = fetchFn ? await fetchFn(`http://ip-api.com/json/${ip}?fields=status,country,city`) : null;
+            if (resp && resp.ok) {
                 const data = await resp.json();
                 if (data.status === 'success') {
                     country = data.country || '';
