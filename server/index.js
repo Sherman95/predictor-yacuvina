@@ -49,6 +49,8 @@ import cors from 'cors';
 import cron from 'node-cron';
 import fs from 'fs';
 import path from 'path';
+// __dirname no existe en ESM; lo definimos manualmente
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 import { config } from './config/index.js';
 import { actualizarDatosClima } from './services/weatherService.js';
 import predictionRoutes from './routes/predictionRoutes.js';
@@ -69,7 +71,7 @@ const app = express();
 // VERSIONADO para poder validar despliegues.
 const STATS_VERSION = '2.1.0'; // 2.1.0 -> geolocalización (ciudad/país) y agregados geo
 // === PERSISTENCIA DE VISITAS ===
-const HIST_PATH = path.join(__dirname || path.dirname(new URL(import.meta.url).pathname), 'visitas-historico.json');
+const HIST_PATH = path.join(__dirname, 'visitas-historico.json');
 function leerHistorico() {
     try {
         return JSON.parse(fs.readFileSync(HIST_PATH, 'utf8'));
