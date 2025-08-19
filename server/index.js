@@ -106,6 +106,7 @@ app.use((req, _res, next) => {
 
 // Endpoint protegido con token en header x-admin-token (configura ADMIN_TOKEN en Render)
 app.get('/api/_stats/visitas', (req, res) => {
+    console.log('[STATS] hit /api/_stats/visitas origin=%s ua=%s token=%s', req.headers.origin, (req.headers['user-agent']||'').slice(0,40), req.headers['x-admin-token']? 'present':'absent');
         if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
                 return res.status(401).json({ error: 'No autorizado' });
         }
