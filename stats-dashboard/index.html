@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Yacuvina Stats Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <header>
+    <h1>📊 Yacuvina Stats</h1>
+    <div class="controls">
+      <input id="baseUrl" placeholder="URL base API (https://tu-api.onrender.com)" />
+      <input id="adminToken" placeholder="X-Admin-Token (opcional)" />
+      <button id="loadBtn">Cargar</button>
+      <button id="autoBtn" data-active="0">Auto 30s</button>
+    </div>
+    <small id="status"></small>
+  </header>
+
+  <main>
+    <section class="cards" id="kpiCards"></section>
+
+    <section>
+      <h2>Visitas por Día</h2>
+      <canvas id="visitasDia"></canvas>
+    </section>
+
+    <section class="grid2">
+      <div>
+        <h2>Visitas por Mes</h2>
+        <canvas id="visitasMes"></canvas>
+      </div>
+      <div>
+        <h2>Top Rutas (Hoy)</h2>
+        <ul id="topRutas"></ul>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div>
+        <h2>Geo País (Hoy)</h2>
+        <canvas id="geoPaisHoy"></canvas>
+      </div>
+      <div>
+        <h2>Geo Ciudad (Hoy)</h2>
+        <canvas id="geoCiudadHoy"></canvas>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div>
+        <h2>Geo País (Histórico)</h2>
+        <canvas id="geoPaisHist"></canvas>
+      </div>
+      <div>
+        <h2>Geo Ciudad (Histórico)</h2>
+        <canvas id="geoCiudadHist"></canvas>
+      </div>
+    </section>
+
+    <details>
+      <summary>JSON Crudo</summary>
+      <pre id="rawJson"></pre>
+    </details>
+  </main>
+
+  <footer>
+    <small>Yacuvina Stats v1 - Dashboard externo. Actualiza cada 30s si activas Auto.</small>
+  </footer>
+</body>
+</html>
