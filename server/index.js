@@ -214,20 +214,33 @@ app.post('/api/visit-beacon', async (req, res) => {
 // ===============================================================
 
 // Configuración de CORS para producción
+const allowedStaticOrigins = [
+    'http://localhost:5173',
+    'http://localhost:4173',
+    'https://predictor-yacuvina.vercel.app',
+    'https://sherman95.github.io' // GitHub Pages dashboard externo
+];
 const corsOptions = {
-    origin: [
-        'http://localhost:5173', // Desarrollo local
-        'http://localhost:4173', // Preview local
-        'https://predictor-yacuvina.vercel.app', // Vercel production
-        'https://*.vercel.app' // Cualquier subdominio de Vercel
-    ],
+    origin: function(origin, callback) {
+        if (!origin) return callback(null, true); // curl / same-origin
+        if (allowedStaticOrigins.includes(origin) || /https:\/\/.*\.vercel\.app$/.test(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Origen no permitido por CORS: ' + origin));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    // Añadimos X-Admin-Token para poder enviar el header personalizado desde el frontend o herramientas
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
 };
 
-app.use(cors(corsOptions));
+app.use((req, res, next) => {
+    cors(corsOptions)(req, res, (err) => {
+        if (err) {
+            return res.status(403).json({ error: 'CORS bloqueado', detalle: err.message });
+        }
+        next();
+    });
+});
 
 // --- RUTAS ---
 app.use('/api/prediccion', predictionRoutes);
