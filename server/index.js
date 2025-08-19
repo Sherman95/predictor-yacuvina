@@ -107,20 +107,20 @@ app.use((req, _res, next) => {
 // Endpoint protegido con token en header x-admin-token (configura ADMIN_TOKEN en Render)
 // Preflight específico (antes del GET) para asegurar cabeceras aun si el middleware global está después
 app.options('/api/_stats/visitas', (req,res)=>{
-    const origin = req.headers.origin;
-    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); } else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    console.log('[STATS][PRELIGHT] OPTIONS from origin=%s headers=%s', req.headers.origin, req.headers['access-control-request-headers']);
+    res.setHeader('Access-Control-Allow-Origin','*');
     res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Admin-Token');
     res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
+    res.setHeader('Access-Control-Max-Age','600');
     return res.sendStatus(204);
 });
 
 app.get('/api/_stats/visitas', (req, res) => {
-    // Asegurar CORS porque este handler está antes del middleware global
-    const origin = req.headers.origin;
-    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); } else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    // CORS abierto (solo lectura publica)
+    res.setHeader('Access-Control-Allow-Origin','*');
     res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Admin-Token');
     res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
-    console.log('[STATS] hit /api/_stats/visitas origin=%s ua=%s token=%s', origin, (req.headers['user-agent']||'').slice(0,40), req.headers['x-admin-token']? 'present':'absent');
+    console.log('[STATS] hit /api/_stats/visitas origin=%s ua=%s token=%s', req.headers.origin, (req.headers['user-agent']||'').slice(0,40), req.headers['x-admin-token']? 'present':'absent');
         if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
                 return res.status(401).json({ error: 'No autorizado' });
         }
