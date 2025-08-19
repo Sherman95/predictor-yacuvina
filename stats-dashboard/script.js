@@ -74,8 +74,12 @@ async function load(){
   let base = $('#baseUrl').value.trim();
   if(!base){ $('#status').textContent='Ingresa la URL base (ej: https://servidor.onrender.com)'; return; }
   base = base.replace(/\/$/,'');
-  // Si el usuario pegó la ruta completa /api/_stats/visitas la recortamos
-  base = base.replace(/\/api\/_stats\/_visitas\/?$/,'');
+  // Si el usuario pegó la ruta completa /api/_stats/visitas (una o más veces) la recortamos
+  base = base.replace(/(\/api\/_stats\/visitas)+\/?$/,'');
+  // Mostrar aviso si se recortó
+  if(!$('#baseUrl').value.endsWith(base)) {
+    console.info('Base URL normalizada a', base);
+  }
   $('#baseUrl').value = base; // reflejar corrección
   const token = $('#adminToken').value.trim();
   const url = base + '/api/_stats/visitas';
