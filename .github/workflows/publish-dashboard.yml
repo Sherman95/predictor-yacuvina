@@ -3,8 +3,6 @@ name: Publish Stats Dashboard
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'stats-dashboard/**'
   workflow_dispatch:
 
 permissions:

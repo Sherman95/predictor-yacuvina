@@ -111,3 +111,4 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Autorellenar dominio si detecta mismo host
   $('#baseUrl').value = location.origin.includes('localhost') ? 'http://localhost:3001' : '';
 });
+// trigger workflow deploy
