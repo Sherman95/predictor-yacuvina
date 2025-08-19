@@ -71,15 +71,30 @@ function renderGeo(data){
 }
 
 async function load(){
-  const base = $('#baseUrl').value.trim().replace(/\/$/,'');
-  if(!base){ alert('Ingresa la URL base'); return; }
+  let base = $('#baseUrl').value.trim();
+  if(!base){ $('#status').textContent='Ingresa la URL base (ej: https://servidor.onrender.com)'; return; }
+  base = base.replace(/\/$/,'');
+  // Si el usuario pegó la ruta completa /api/_stats/visitas la recortamos
+  base = base.replace(/\/api\/_stats\/_visitas\/?$/,'');
+  $('#baseUrl').value = base; // reflejar corrección
   const token = $('#adminToken').value.trim();
   const url = base + '/api/_stats/visitas';
-  $('#status').textContent = 'Cargando...';
+  $('#status').textContent = 'Cargando…';
   try{
     const resp = await fetch(url, { headers: token? {'X-Admin-Token':token} : {} });
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    if(!resp.ok){
+      let hint='';
+      if(resp.status===401) hint='(Token inválido o faltante)';
+      else if(resp.status===404) hint='(Revisa que la URL base NO incluya /api/_stats/visitas y que el backend esté arriba)';
+      else if(resp.status===403) hint='(CORS o bloqueo en backend)';
+      throw new Error('HTTP '+resp.status+' '+hint);
+    }
     const data = await resp.json();
+    if(!data || !data.version){
+      $('#status').textContent='Respuesta inesperada (sin version). Ver consola.';
+      console.warn('Payload recibido', data);
+      return;
+    }
     buildKPI(data);
     renderDayChart(data);
     renderMonthChart(data);
