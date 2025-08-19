@@ -229,7 +229,7 @@ const corsOptions = {
         return callback(new Error('Origen no permitido por CORS: ' + origin));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
 };
 
@@ -238,9 +238,16 @@ app.use((req, res, next) => {
         if (err) {
             return res.status(403).json({ error: 'CORS bloqueado', detalle: err.message });
         }
+        // Responder de inmediato preflight OPTIONS exitoso
+        if (req.method === 'OPTIONS') {
+            return res.sendStatus(204);
+        }
         next();
     });
 });
+
+// Asegurar manejo explícito opcional (redundante pero seguro)
+app.options('*', cors(corsOptions));
 
 // --- RUTAS ---
 app.use('/api/prediccion', predictionRoutes);
