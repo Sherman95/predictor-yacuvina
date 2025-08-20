@@ -99,8 +99,9 @@ const visitas = { fecha: null, total: 0, unicos: 0, claves: new Set(), rutas: {}
 const acumulado = { total: 0, unicos: 0, claves: new Set() };
 // Contador específico de visitantes del sitio (beacon) separado de las llamadas API técnicas
 const beacon = { fecha: null, total: 0, unicos: 0, claves: new Set() };
-// Geolocalización (por ciudad / país)
-const geo = { fecha: null, porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {}, keysCiudad: {}, keysPais: {} };
+// Geolocalización (por ciudad / país) + soporte de coordenadas agregadas (lat/lon promedio por ciudad)
+// geo.coords: { [city]: { latSum, lonSum, count } }
+const geo = { fecha: null, porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {}, keysCiudad: {}, keysPais: {}, coords: {} };
 const geoCache = new Map();
 const GEO_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h
 const GEO_PROVIDER = process.env.GEO_PROVIDER || 'ip-api'; // ip-api | ipapi | ipwhois
@@ -113,7 +114,7 @@ function cargarDiaActualPersistido() {
         if (snap.fecha === hoy) {
             visitas.fecha = snap.fecha; visitas.total = snap.total||0; visitas.unicos = snap.unicos||0; visitas.claves = new Set(snap.claves||[]); visitas.rutas = snap.rutas||{};
             beacon.fecha = snap.beacon?.fecha || hoy; beacon.total = snap.beacon?.total||0; beacon.unicos = snap.beacon?.unicos||0; beacon.claves = new Set(snap.beacon?.claves||[]);
-            geo.fecha = snap.geo?.fecha || hoy; geo.porCiudad = snap.geo?.porCiudad||{}; geo.porPais = snap.geo?.porPais||{}; geo.uniqueCiudad = snap.geo?.uniqueCiudad||{}; geo.uniquePais = snap.geo?.uniquePais||{};
+            geo.fecha = snap.geo?.fecha || hoy; geo.porCiudad = snap.geo?.porCiudad||{}; geo.porPais = snap.geo?.porPais||{}; geo.uniqueCiudad = snap.geo?.uniqueCiudad||{}; geo.uniquePais = snap.geo?.uniquePais||{}; geo.coords = snap.geo?.coords || {};
             acumulado.total = snap.acumulado?.total || acumulado.total;
             acumulado.unicos = snap.acumulado?.unicos || acumulado.unicos;
             if (snap.acumulado?.claves) acumulado.claves = new Set(snap.acumulado.claves);
@@ -136,7 +137,7 @@ function persistirDiaActualDebounce() {
                 claves: [...visitas.claves],
                 rutas: visitas.rutas,
                 beacon: { fecha: beacon.fecha, total: beacon.total, unicos: beacon.unicos, claves: [...beacon.claves] },
-                geo: { fecha: geo.fecha, porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais },
+                geo: { fecha: geo.fecha, porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais, coords: geo.coords },
                 acumulado: { total: acumulado.total, unicos: acumulado.unicos, claves: [...acumulado.claves] }
             };
             fs.writeFileSync(CURRENT_PATH, JSON.stringify(snap,null,2));
@@ -156,14 +157,15 @@ async function procesarGeo(ipRaw) {
             let url;
             if (GEO_PROVIDER === 'ipapi') url = `https://ipapi.co/${ip}/json/`;
             else if (GEO_PROVIDER === 'ipwhois') url = `https://ipwho.is/${ip}`;
-            else url = `http://ip-api.com/json/${ip}?fields=status,country,city`;
+            else url = `http://ip-api.com/json/${ip}?fields=status,country,city,lat,lon`;
             const resp = fetchFn ? await fetchFn(url) : null;
             if (resp && resp.ok) {
                 const data = await resp.json();
-                if (GEO_PROVIDER === 'ipapi') { country = data.country_name || data.country || ''; city = data.city || ''; }
-                else if (GEO_PROVIDER === 'ipwhois') { if (data.success !== false) { country = data.country || ''; city = data.city || ''; } }
-                else if (data.status === 'success') { country = data.country || ''; city = data.city || ''; }
-                geoCache.set(ip, { city, country, ts: now });
+                let lat = null, lon = null;
+                if (GEO_PROVIDER === 'ipapi') { country = data.country_name || data.country || ''; city = data.city || ''; lat = data.latitude || data.lat || null; lon = data.longitude || data.lon || null; }
+                else if (GEO_PROVIDER === 'ipwhois') { if (data.success !== false) { country = data.country || ''; city = data.city || ''; lat = data.latitude || data.lat || null; lon = data.longitude || data.lon || null; } }
+                else if (data.status === 'success') { country = data.country || ''; city = data.city || ''; lat = data.lat || null; lon = data.lon || null; }
+                geoCache.set(ip, { city, country, lat, lon, ts: now });
             }
         }
         if (!country) country = 'Desconocido'; if (!city) city = 'Desconocido';
@@ -173,6 +175,13 @@ async function procesarGeo(ipRaw) {
         if (!geo.keysPais[country]) geo.keysPais[country] = new Set();
         if (!geo.keysCiudad[city].has(ip)) { geo.keysCiudad[city].add(ip); geo.uniqueCiudad[city] = (geo.uniqueCiudad[city] || 0) + 1; }
         if (!geo.keysPais[country].has(ip)) { geo.keysPais[country].add(ip); geo.uniquePais[country] = (geo.uniquePais[country] || 0) + 1; }
+        const cachedNow = geoCache.get(ip) || {};
+        if (cachedNow.lat != null && cachedNow.lon != null) {
+            if (!geo.coords[city]) geo.coords[city] = { latSum: 0, lonSum: 0, count: 0 };
+            geo.coords[city].latSum += cachedNow.lat;
+            geo.coords[city].lonSum += cachedNow.lon;
+            geo.coords[city].count += 1;
+        }
         persistirDiaActualDebounce();
     } catch {}
 }
@@ -192,7 +201,8 @@ function resetSiNuevoDia() {
                             porCiudad: geo.porCiudad,
                             porPais: geo.porPais,
                             uniqueCiudad: geo.uniqueCiudad,
-                            uniquePais: geo.uniquePais
+                            uniquePais: geo.uniquePais,
+                            coords: geo.coords
                         }
                     };
                     guardarHistorico(historico);
@@ -201,7 +211,7 @@ function resetSiNuevoDia() {
                 try { if (fs.existsSync(CURRENT_PATH)) fs.unlinkSync(CURRENT_PATH); } catch{}
         }
         if (beacon.fecha !== hoy) { beacon.fecha = hoy; beacon.total = 0; beacon.unicos = 0; beacon.claves = new Set(); }
-        if (geo.fecha !== hoy) { geo.fecha = hoy; geo.porCiudad = {}; geo.porPais = {}; geo.uniqueCiudad = {}; geo.uniquePais = {}; geo.keysCiudad = {}; geo.keysPais = {}; }
+    if (geo.fecha !== hoy) { geo.fecha = hoy; geo.porCiudad = {}; geo.porPais = {}; geo.uniqueCiudad = {}; geo.uniquePais = {}; geo.keysCiudad = {}; geo.keysPais = {}; geo.coords = {}; }
 }
 app.use((req, _res, next) => {
     // No contar endpoints internos / beacon para no inflar
@@ -265,15 +275,31 @@ app.get('/api/_stats/visitas', requireAuth, (req, res) => {
         totalUnicos += datos.unicos || 0;
     }
     const geoHoy = { porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais };
-    const geoHistorico = { porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {} };
+    const geoHistorico = { porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {}, coords: {} };
     for (const datosDia of Object.values(historico.historico)) {
         if (datosDia.geo) {
             for (const [c, v] of Object.entries(datosDia.geo.porCiudad || {})) geoHistorico.porCiudad[c] = (geoHistorico.porCiudad[c] || 0) + v;
             for (const [p, v] of Object.entries(datosDia.geo.porPais || {})) geoHistorico.porPais[p] = (geoHistorico.porPais[p] || 0) + v;
             for (const [c, v] of Object.entries(datosDia.geo.uniqueCiudad || {})) geoHistorico.uniqueCiudad[c] = (geoHistorico.uniqueCiudad[c] || 0) + v;
             for (const [p, v] of Object.entries(datosDia.geo.uniquePais || {})) geoHistorico.uniquePais[p] = (geoHistorico.uniquePais[p] || 0) + v;
+            for (const [city, agg] of Object.entries(datosDia.geo.coords || {})) {
+                if (!geoHistorico.coords[city]) geoHistorico.coords[city] = { latSum: 0, lonSum: 0, count: 0 };
+                geoHistorico.coords[city].latSum += agg.latSum || 0;
+                geoHistorico.coords[city].lonSum += agg.lonSum || 0;
+                geoHistorico.coords[city].count += agg.count || 0;
+            }
         }
     }
+    function buildCoordsList(coordsAgg, porCiudad, uniqueCiudad) {
+        const list = [];
+        for (const [city, agg] of Object.entries(coordsAgg)) {
+            if (!agg.count) continue;
+            list.push({ city, lat: +(agg.latSum / agg.count).toFixed(4), lon: +(agg.lonSum / agg.count).toFixed(4), total: porCiudad?.[city] || 0, unique: uniqueCiudad?.[city] || 0 });
+        }
+        return list;
+    }
+    const geoCoordsHoy = buildCoordsList(geo.coords, geo.porCiudad, geo.uniqueCiudad);
+    const geoCoordsHistorico = buildCoordsList(geoHistorico.coords, geoHistorico.porCiudad, geoHistorico.uniqueCiudad);
     res.json({
         version: STATS_VERSION,
         fecha: visitas.fecha,
@@ -288,7 +314,11 @@ app.get('/api/_stats/visitas', requireAuth, (req, res) => {
         totales: { total: totalVisitas, unicos: totalUnicos },
         acumulado: { total: acumulado.total, unicos: acumulado.unicos },
         geoHoy,
-        geoHistorico,
+    geoHistorico,
+    geoCoordsHoy,
+    geoCoordsHistorico,
+    // Alias explícito para que el frontend pueda consumir claramente el acumulado geográfico (sin transformar)
+    geoAcumulado: geoHistorico,
         nota: 'POST /api/_stats/reset para reiniciar (protegido)'
     });
 });
