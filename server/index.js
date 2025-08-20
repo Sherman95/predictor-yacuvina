@@ -71,15 +71,7 @@ app.use((req,res,next)=>{
 const APP_BUILD_ID = new Date().toISOString();
 console.log('[BOOT] APP_BUILD_ID=%s', APP_BUILD_ID);
 
-// CORS ultra simple (permitir todo) como capa base para eliminar dudas (se mantiene lógica específica más abajo)
-app.use((req,res,next)=>{
-    const origin = req.headers.origin;
-    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
-    else { res.setHeader('Access-Control-Allow-Origin','*'); }
-    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
-    next();
-});
+// (CORS base movido a corsOptions + handlers específicos; se elimina capa ultra permisiva para evitar conflictos)
 
 // Logger simple
 app.use((req,res,next)=>{ console.log('[REQ]', req.method, req.path); next(); });
@@ -353,8 +345,8 @@ const corsOptions = {
 // CORS estándar para la mayoría de rutas
 app.use(cors(corsOptions));
 
-// Respuesta genérica a cualquier preflight OPTIONS (evita 404 en rutas nuevas)
-app.options('*', cors(corsOptions));
+// Respuesta genérica a cualquier preflight OPTIONS (Express 5: evitar '*' que rompe path-to-regexp)
+app.options(/.*/, cors(corsOptions));
 
 // CORS abierto específicamente para endpoint público de estadísticas (solo lectura)
 app.use((req,res,next)=>{
