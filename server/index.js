@@ -37,9 +37,10 @@ const app = express();
 // ================= VISITAS SIMPLE (IN-MEMORIA) =================
 // Cuenta total y "únicos" (IP+UA) por día. No persiste en disco para mantenerlo liviano.
 // VERSIONADO para poder validar despliegues.
-const STATS_VERSION = '2.1.0'; // 2.1.0 -> geolocalización (ciudad/país) y agregados geo
+const STATS_VERSION = '2.3.0'; // 2.3.0 -> contadores acumulados (sin reset) + persistencia día en curso
 // === PERSISTENCIA DE VISITAS ===
 const HIST_PATH = path.join(__dirname, 'visitas-historico.json');
+const CURRENT_PATH = path.join(__dirname, 'visitas-current.json');
 function leerHistorico() {
     try {
         return JSON.parse(fs.readFileSync(HIST_PATH, 'utf8'));
@@ -52,12 +53,87 @@ function guardarHistorico(historico) {
 }
 
 const visitas = { fecha: null, total: 0, unicos: 0, claves: new Set(), rutas: {} };
+// Contadores globales (no se resetean) para "no quiero reset diario"
+const acumulado = { total: 0, unicos: 0, claves: new Set() };
 // Contador específico de visitantes del sitio (beacon) separado de las llamadas API técnicas
 const beacon = { fecha: null, total: 0, unicos: 0, claves: new Set() };
 // Geolocalización (por ciudad / país)
 const geo = { fecha: null, porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {}, keysCiudad: {}, keysPais: {} };
 const geoCache = new Map();
 const GEO_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h
+const GEO_PROVIDER = process.env.GEO_PROVIDER || 'ip-api'; // ip-api | ipapi | ipwhois
+
+function cargarDiaActualPersistido() {
+    try {
+        if (!fs.existsSync(CURRENT_PATH)) return;
+        const snap = JSON.parse(fs.readFileSync(CURRENT_PATH,'utf8'));
+        const hoy = new Date().toISOString().slice(0,10);
+        if (snap.fecha === hoy) {
+            visitas.fecha = snap.fecha; visitas.total = snap.total||0; visitas.unicos = snap.unicos||0; visitas.claves = new Set(snap.claves||[]); visitas.rutas = snap.rutas||{};
+            beacon.fecha = snap.beacon?.fecha || hoy; beacon.total = snap.beacon?.total||0; beacon.unicos = snap.beacon?.unicos||0; beacon.claves = new Set(snap.beacon?.claves||[]);
+            geo.fecha = snap.geo?.fecha || hoy; geo.porCiudad = snap.geo?.porCiudad||{}; geo.porPais = snap.geo?.porPais||{}; geo.uniqueCiudad = snap.geo?.uniqueCiudad||{}; geo.uniquePais = snap.geo?.uniquePais||{};
+            acumulado.total = snap.acumulado?.total || acumulado.total;
+            acumulado.unicos = snap.acumulado?.unicos || acumulado.unicos;
+            if (snap.acumulado?.claves) acumulado.claves = new Set(snap.acumulado.claves);
+            console.log('[STATS] Día restaurado desde visitas-current.json (incluye acumulado)');
+        }
+    } catch(e){ console.warn('[STATS] No se pudo restaurar día actual:', e.message); }
+}
+
+let persistTimer = null;
+function persistirDiaActualDebounce() {
+    if (persistTimer) return;
+    persistTimer = setTimeout(()=>{
+        persistTimer = null;
+        try {
+            if (!visitas.fecha) return;
+            const snap = {
+                fecha: visitas.fecha,
+                total: visitas.total,
+                unicos: visitas.unicos,
+                claves: [...visitas.claves],
+                rutas: visitas.rutas,
+                beacon: { fecha: beacon.fecha, total: beacon.total, unicos: beacon.unicos, claves: [...beacon.claves] },
+                geo: { fecha: geo.fecha, porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais },
+                acumulado: { total: acumulado.total, unicos: acumulado.unicos, claves: [...acumulado.claves] }
+            };
+            fs.writeFileSync(CURRENT_PATH, JSON.stringify(snap,null,2));
+        } catch(e){ console.warn('[STATS] Persistencia falló:', e.message); }
+    }, 3000);
+}
+
+async function procesarGeo(ipRaw) {
+    try {
+        const ip = ipRaw === '::1' ? '127.0.0.1' : ipRaw;
+        if (!ip) return;
+        let city = '', country = '';
+        const now = Date.now();
+        const cached = geoCache.get(ip);
+        if (cached && (now - cached.ts) < GEO_CACHE_TTL_MS) ({ city, country } = cached);
+        else if (!ip.startsWith('127.') && !ip.startsWith('10.') && !ip.startsWith('192.168') && ip !== '::1') {
+            let url;
+            if (GEO_PROVIDER === 'ipapi') url = `https://ipapi.co/${ip}/json/`;
+            else if (GEO_PROVIDER === 'ipwhois') url = `https://ipwho.is/${ip}`;
+            else url = `http://ip-api.com/json/${ip}?fields=status,country,city`;
+            const resp = fetchFn ? await fetchFn(url) : null;
+            if (resp && resp.ok) {
+                const data = await resp.json();
+                if (GEO_PROVIDER === 'ipapi') { country = data.country_name || data.country || ''; city = data.city || ''; }
+                else if (GEO_PROVIDER === 'ipwhois') { if (data.success !== false) { country = data.country || ''; city = data.city || ''; } }
+                else if (data.status === 'success') { country = data.country || ''; city = data.city || ''; }
+                geoCache.set(ip, { city, country, ts: now });
+            }
+        }
+        if (!country) country = 'Desconocido'; if (!city) city = 'Desconocido';
+        geo.porCiudad[city] = (geo.porCiudad[city] || 0) + 1;
+        geo.porPais[country] = (geo.porPais[country] || 0) + 1;
+        if (!geo.keysCiudad[city]) geo.keysCiudad[city] = new Set();
+        if (!geo.keysPais[country]) geo.keysPais[country] = new Set();
+        if (!geo.keysCiudad[city].has(ip)) { geo.keysCiudad[city].add(ip); geo.uniqueCiudad[city] = (geo.uniqueCiudad[city] || 0) + 1; }
+        if (!geo.keysPais[country].has(ip)) { geo.keysPais[country].add(ip); geo.uniquePais[country] = (geo.uniquePais[country] || 0) + 1; }
+        persistirDiaActualDebounce();
+    } catch {}
+}
 
 function resetSiNuevoDia() {
         const hoy = new Date().toISOString().slice(0,10);
@@ -80,6 +156,7 @@ function resetSiNuevoDia() {
                     guardarHistorico(historico);
                 }
                 visitas.fecha = hoy; visitas.total = 0; visitas.unicos = 0; visitas.claves = new Set(); visitas.rutas = {};
+                try { if (fs.existsSync(CURRENT_PATH)) fs.unlinkSync(CURRENT_PATH); } catch{}
         }
         if (beacon.fecha !== hoy) { beacon.fecha = hoy; beacon.total = 0; beacon.unicos = 0; beacon.claves = new Set(); }
         if (geo.fecha !== hoy) { geo.fecha = hoy; geo.porCiudad = {}; geo.porPais = {}; geo.uniqueCiudad = {}; geo.uniquePais = {}; geo.keysCiudad = {}; geo.keysPais = {}; }
@@ -94,12 +171,14 @@ app.use((req, _res, next) => {
         const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
         const ua = (req.headers['user-agent'] || '').slice(0, 80); // ampliar un poco para distinguir navegadores
         const clave = ip + '|' + ua;
-        visitas.total += 1;
-        if (!visitas.claves.has(clave)) {
-            visitas.claves.add(clave);
-            visitas.unicos += 1;
-        }
+    visitas.total += 1;
+    acumulado.total += 1;
+        let nuevoUnico = false;
+    if (!visitas.claves.has(clave)) { visitas.claves.add(clave); visitas.unicos += 1; nuevoUnico = true; }
+    if (!acumulado.claves.has(clave)) { acumulado.claves.add(clave); acumulado.unicos += 1; }
         visitas.rutas[req.path] = (visitas.rutas[req.path] || 0) + 1;
+    if (nuevoUnico) { setImmediate(()=>procesarGeo(ip)); }
+    persistirDiaActualDebounce();
     }
     next();
 });
@@ -160,7 +239,7 @@ app.get('/api/_stats/visitas', (req, res) => {
                 for (const [p, v] of Object.entries(datosDia.geo.uniquePais || {})) geoHistorico.uniquePais[p] = (geoHistorico.uniquePais[p] || 0) + v;
             }
         }
-        res.json({
+    res.json({
                 version: STATS_VERSION,
                 fecha: visitas.fecha,
                 total: visitas.total,
@@ -172,6 +251,7 @@ app.get('/api/_stats/visitas', (req, res) => {
                 historico: historico.historico,
                 porMes,
                 totales: { total: totalVisitas, unicos: totalUnicos },
+        acumulado: { total: acumulado.total, unicos: acumulado.unicos },
                 geoHoy,
                 geoHistorico,
                 nota: 'POST /api/_stats/reset para reiniciar (protegido)'
@@ -192,39 +272,16 @@ app.post('/api/_stats/reset', (req, res) => {
 app.post('/api/visit-beacon', async (req, res) => {
     resetSiNuevoDia();
     const ipRaw = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
-    const ip = ipRaw === '::1' ? '127.0.0.1' : ipRaw;
     const ua = (req.headers['user-agent'] || '').slice(0, 120);
-    const clave = ip + '|' + ua;
+    const clave = ipRaw + '|' + ua;
     beacon.total += 1;
     let nuevo = false;
     if (!beacon.claves.has(clave)) { beacon.claves.add(clave); beacon.unicos += 1; nuevo = true; }
-    let city = '', country = '';
-    try {
-        const cached = geoCache.get(ip);
-        const now = Date.now();
-        if (cached && (now - cached.ts) < GEO_CACHE_TTL_MS) {
-            ({ city, country } = cached);
-        } else if (!ip.startsWith('127.') && !ip.startsWith('10.') && !ip.startsWith('192.168') && ip !== '::1') {
-            const resp = fetchFn ? await fetchFn(`http://ip-api.com/json/${ip}?fields=status,country,city`) : null;
-            if (resp && resp.ok) {
-                const data = await resp.json();
-                if (data.status === 'success') {
-                    country = data.country || '';
-                    city = data.city || '';
-                    geoCache.set(ip, { city, country, ts: now });
-                }
-            }
-        }
-    } catch {}
-    if (!country) country = 'Desconocido';
-    if (!city) city = 'Desconocido';
-    geo.porCiudad[city] = (geo.porCiudad[city] || 0) + 1;
-    geo.porPais[country] = (geo.porPais[country] || 0) + 1;
-    if (!geo.keysCiudad[city]) geo.keysCiudad[city] = new Set();
-    if (!geo.keysPais[country]) geo.keysPais[country] = new Set();
-    if (!geo.keysCiudad[city].has(ip)) { geo.keysCiudad[city].add(ip); geo.uniqueCiudad[city] = (geo.uniqueCiudad[city] || 0) + 1; }
-    if (!geo.keysPais[country].has(ip)) { geo.keysPais[country].add(ip); geo.uniquePais[country] = (geo.uniquePais[country] || 0) + 1; }
-    res.json({ ok: true, nuevo, fecha: beacon.fecha, city, country });
+    await procesarGeo(ipRaw);
+    // Buscar último city/country del cache para devolver
+    const ipCanon = ipRaw === '::1' ? '127.0.0.1' : ipRaw;
+    const cached = geoCache.get(ipCanon) || {};
+    res.json({ ok: true, nuevo, fecha: beacon.fecha, city: cached.city || 'Desconocido', country: cached.country || 'Desconocido' });
 });
 // ===============================================================
 
@@ -306,6 +363,8 @@ app.get('/api/_stats/integridad', (req, res) => {
 app.listen(config.port, () => {
     console.log(`✅ Servidor corriendo en el puerto ${config.port}`);
     console.log(`🌤️ Clima actual disponible en: http://localhost:${config.port}/api/current-weather`);
+    // Restaurar día actual si existe
+    cargarDiaActualPersistido();
     
     // Ejecuta la actualización una vez al iniciar.
     actualizarDatosClima();
