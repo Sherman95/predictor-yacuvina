@@ -25,6 +25,8 @@ import predictionRoutes from './routes/predictionRoutes.js';
 import validationRoutes from './routes/validationRoutes.js';
 import currentWeatherRoutes from './routes/currentWeatherRoutes.js';
 import debugRoutes from './routes/debugRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import { requireAuth } from './controllers/authController.js';
 
 // --- VALIDACIÓN DE APIS ---
 if (!config.apiKeys.openWeather || !config.apiKeys.accuweather) {
@@ -33,6 +35,54 @@ if (!config.apiKeys.openWeather || !config.apiKeys.accuweather) {
 }
 
 const app = express();
+
+// Middleware para parsear JSON y formularios (requerido para /api/auth/login)
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Rutas de salud tempranas para diagnóstico (deben responder 200 siempre si el proceso está vivo)
+app.get('/ping', (req,res)=>{
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.type('text/plain').send('pong');
+});
+app.get('/', (req,res)=>{
+    const origin = req.headers.origin;
+    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+    else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    res.json({ ok:true, root:true, time: new Date().toISOString() });
+});
+
+// Fallback global para cualquier preflight OPTIONS (si algo no lo capturó antes)
+app.use((req,res,next)=>{
+    if (req.method === 'OPTIONS') {
+        const origin = req.headers.origin;
+        if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+        else { res.setHeader('Access-Control-Allow-Origin','*'); }
+        const reqHeaders = req.headers['access-control-request-headers'] || 'Content-Type, Authorization';
+        res.setHeader('Access-Control-Allow-Headers', reqHeaders);
+        res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
+        res.setHeader('Access-Control-Max-Age','600');
+        return res.sendStatus(204);
+    }
+    next();
+});
+
+// --- DIAGNÓSTICO / BUILD ID ---
+const APP_BUILD_ID = new Date().toISOString();
+console.log('[BOOT] APP_BUILD_ID=%s', APP_BUILD_ID);
+
+// CORS ultra simple (permitir todo) como capa base para eliminar dudas (se mantiene lógica específica más abajo)
+app.use((req,res,next)=>{
+    const origin = req.headers.origin;
+    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+    else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    next();
+});
+
+// Logger simple
+app.use((req,res,next)=>{ console.log('[REQ]', req.method, req.path); next(); });
 
 // ================= VISITAS SIMPLE (IN-MEMORIA) =================
 // Cuenta total y "únicos" (IP+UA) por día. No persiste en disco para mantenerlo liviano.
@@ -194,75 +244,65 @@ app.options('/api/_stats/visitas', (req,res)=>{
     return res.sendStatus(204);
 });
 
-app.get('/api/_stats/visitas', (req, res) => {
-    // CORS abierto (solo lectura publica)
+app.get('/api/_stats/visitas', requireAuth, (req, res) => {
     res.setHeader('Access-Control-Allow-Origin','*');
     res.setHeader('Access-Control-Allow-Headers','Content-Type, X-Admin-Token');
     res.setHeader('Access-Control-Allow-Methods','GET,OPTIONS');
-    console.log('[STATS] hit /api/_stats/visitas origin=%s ua=%s token=%s', req.headers.origin, (req.headers['user-agent']||'').slice(0,40), req.headers['x-admin-token']? 'present':'absent');
-        if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
-                return res.status(401).json({ error: 'No autorizado' });
+    console.log('[STATS] hit /api/_stats/visitas origin=%s ua=%s', req.headers.origin, (req.headers['user-agent']||'').slice(0,40));
+    const historico = leerHistorico();
+    historico.historico[visitas.fecha] = {
+        total: visitas.total,
+        unicos: visitas.unicos,
+        rutas: visitas.rutas,
+        site: { hits: beacon.total, visitors: beacon.unicos },
+        geo: {
+            porCiudad: geo.porCiudad,
+            porPais: geo.porPais,
+            uniqueCiudad: geo.uniqueCiudad,
+            uniquePais: geo.uniquePais
         }
-        // Leer histórico y agregar el día actual
-        const historico = leerHistorico();
-        // Incluir también métricas de beacon y geolocalización del día actual para consistencia
-        historico.historico[visitas.fecha] = {
-            total: visitas.total,
-            unicos: visitas.unicos,
-            rutas: visitas.rutas,
-            site: { hits: beacon.total, visitors: beacon.unicos },
-            geo: {
-                porCiudad: geo.porCiudad,
-                porPais: geo.porPais,
-                uniqueCiudad: geo.uniqueCiudad,
-                uniquePais: geo.uniquePais
-            }
-        };
-        // Agregación por mes y totales
-        const porMes = {};
-        let totalVisitas = 0, totalUnicos = 0;
-        for (const [fecha, datos] of Object.entries(historico.historico)) {
-            const mes = fecha.slice(0,7);
-            if (!porMes[mes]) porMes[mes] = { total: 0, unicos: 0 };
-            porMes[mes].total += datos.total || 0;
-            porMes[mes].unicos += datos.unicos || 0;
-            totalVisitas += datos.total || 0;
-            totalUnicos += datos.unicos || 0;
+    };
+    const porMes = {};
+    let totalVisitas = 0, totalUnicos = 0;
+    for (const [fecha, datos] of Object.entries(historico.historico)) {
+        const mes = fecha.slice(0,7);
+        if (!porMes[mes]) porMes[mes] = { total: 0, unicos: 0 };
+        porMes[mes].total += datos.total || 0;
+        porMes[mes].unicos += datos.unicos || 0;
+        totalVisitas += datos.total || 0;
+        totalUnicos += datos.unicos || 0;
+    }
+    const geoHoy = { porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais };
+    const geoHistorico = { porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {} };
+    for (const datosDia of Object.values(historico.historico)) {
+        if (datosDia.geo) {
+            for (const [c, v] of Object.entries(datosDia.geo.porCiudad || {})) geoHistorico.porCiudad[c] = (geoHistorico.porCiudad[c] || 0) + v;
+            for (const [p, v] of Object.entries(datosDia.geo.porPais || {})) geoHistorico.porPais[p] = (geoHistorico.porPais[p] || 0) + v;
+            for (const [c, v] of Object.entries(datosDia.geo.uniqueCiudad || {})) geoHistorico.uniqueCiudad[c] = (geoHistorico.uniqueCiudad[c] || 0) + v;
+            for (const [p, v] of Object.entries(datosDia.geo.uniquePais || {})) geoHistorico.uniquePais[p] = (geoHistorico.uniquePais[p] || 0) + v;
         }
-        const geoHoy = { porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais };
-        const geoHistorico = { porCiudad: {}, porPais: {}, uniqueCiudad: {}, uniquePais: {} };
-        for (const datosDia of Object.values(historico.historico)) {
-            if (datosDia.geo) {
-                for (const [c, v] of Object.entries(datosDia.geo.porCiudad || {})) geoHistorico.porCiudad[c] = (geoHistorico.porCiudad[c] || 0) + v;
-                for (const [p, v] of Object.entries(datosDia.geo.porPais || {})) geoHistorico.porPais[p] = (geoHistorico.porPais[p] || 0) + v;
-                for (const [c, v] of Object.entries(datosDia.geo.uniqueCiudad || {})) geoHistorico.uniqueCiudad[c] = (geoHistorico.uniqueCiudad[c] || 0) + v;
-                for (const [p, v] of Object.entries(datosDia.geo.uniquePais || {})) geoHistorico.uniquePais[p] = (geoHistorico.uniquePais[p] || 0) + v;
-            }
-        }
+    }
     res.json({
-                version: STATS_VERSION,
-                fecha: visitas.fecha,
-                total: visitas.total,
-                unicos: visitas.unicos,
-                rutas: visitas.rutas,
-                siteVisitorsHoy: beacon.unicos,
-                siteHitsHoy: beacon.total,
-                excluyeSelf: true,
-                historico: historico.historico,
-                porMes,
-                totales: { total: totalVisitas, unicos: totalUnicos },
+        version: STATS_VERSION,
+        fecha: visitas.fecha,
+        total: visitas.total,
+        unicos: visitas.unicos,
+        rutas: visitas.rutas,
+        siteVisitorsHoy: beacon.unicos,
+        siteHitsHoy: beacon.total,
+        excluyeSelf: true,
+        historico: historico.historico,
+        porMes,
+        totales: { total: totalVisitas, unicos: totalUnicos },
         acumulado: { total: acumulado.total, unicos: acumulado.unicos },
-                geoHoy,
-                geoHistorico,
-                nota: 'POST /api/_stats/reset para reiniciar (protegido)'
-        });
+        geoHoy,
+        geoHistorico,
+        nota: 'POST /api/_stats/reset para reiniciar (protegido)'
+    });
 });
 
 // Reset manual (POST) para pruebas. Protegido.
-app.post('/api/_stats/reset', (req, res) => {
-    if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
-        return res.status(401).json({ error: 'No autorizado' });
-    }
+app.post('/api/_stats/reset', requireAuth, (req, res) => {
     visitas.fecha = null; // forzar reset próximo GET contado
     resetSiNuevoDia();
     res.json({ ok: true, mensaje: 'Estadísticas reseteadas', fecha: visitas.fecha });
@@ -289,13 +329,20 @@ app.post('/api/visit-beacon', async (req, res) => {
 const allowedStaticOrigins = [
     'http://localhost:5173',
     'http://localhost:4173',
+    'http://localhost:5500',
     'https://predictor-yacuvina.vercel.app',
     'https://sherman95.github.io' // GitHub Pages dashboard externo
 ];
 const corsOptions = {
     origin: function(origin, callback) {
         if (!origin) { return callback(null, true); }
-        if (allowedStaticOrigins.includes(origin) || /https:\/\/.*\.vercel\.app$/.test(origin)) {
+        // Permitir cualquier puerto localhost / 127.0.0.1 para desarrollo
+        if (
+            allowedStaticOrigins.includes(origin) ||
+            /https:\/\/.*\.vercel\.app$/.test(origin) ||
+            /^http:\/\/localhost(?::\d+)?$/.test(origin) ||
+            /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin)
+        ) {
             return callback(null, true);
         }
         return callback(new Error('Origen no permitido por CORS: ' + origin));
@@ -305,6 +352,9 @@ const corsOptions = {
 
 // CORS estándar para la mayoría de rutas
 app.use(cors(corsOptions));
+
+// Respuesta genérica a cualquier preflight OPTIONS (evita 404 en rutas nuevas)
+app.options('*', cors(corsOptions));
 
 // CORS abierto específicamente para endpoint público de estadísticas (solo lectura)
 app.use((req,res,next)=>{
@@ -324,13 +374,37 @@ app.use((req,res,next)=>{
 });
 
 // --- RUTAS ---
+// CORS abierto específico para autenticación (simplifica preflight desde cualquier localhost y dashboard externo)
+app.use('/api/auth', (req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+    else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods','GET,POST,OPTIONS');
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+});
+
+// Handler explícito OPTIONS para /api/auth/login (debug)
+app.options('/api/auth/login', (req,res)=>{
+    const origin = req.headers.origin;
+    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+    else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    res.setHeader('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods','POST,OPTIONS');
+    res.setHeader('Access-Control-Max-Age','600');
+    console.log('[CORS][AUTH] Preflight /api/auth/login origin=%s headers=%s', origin, req.headers['access-control-request-headers']);
+    return res.sendStatus(204);
+});
+
 app.use('/api/prediccion', predictionRoutes);
 app.use('/api/validacion', validationRoutes);
 app.use('/api', currentWeatherRoutes); // 🌤️ Nueva ruta para clima actual
 app.use('/api/debug', debugRoutes); // 🔍 Rutas de debugging
+app.use('/api/auth', authRoutes); // 🔐 JWT Auth
 
 // Endpoint de verificación de integridad de visitas (registrado tras crear 'app')
-app.get('/api/_stats/integridad', (req, res) => {
+app.get('/api/_stats/integridad', requireAuth, (req, res) => {
     if (process.env.ADMIN_TOKEN && req.headers['x-admin-token'] !== process.env.ADMIN_TOKEN) {
         return res.status(401).json({ error: 'No autorizado' });
     }
@@ -360,17 +434,40 @@ app.get('/api/_stats/integridad', (req, res) => {
 });
 
 // --- INICIO DEL SERVIDOR Y TAREAS PROGRAMADAS ---
+// Endpoint raíz de salud (antes de listen)
+app.get('/', (req, res) => {
+    const origin = req.headers.origin;
+    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+    else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    res.json({ ok:true, service:'predictor-yacuvina-api', time: new Date().toISOString() });
+});
+
+app.get('/__info', (req,res)=>{
+    res.json({ ok:true, build: APP_BUILD_ID, env:{ node: process.version, port: config.port, mode: config.environment }, routes: Object.keys(app._router.stack).length });
+});
+
 app.listen(config.port, () => {
     console.log(`✅ Servidor corriendo en el puerto ${config.port}`);
     console.log(`🌤️ Clima actual disponible en: http://localhost:${config.port}/api/current-weather`);
     // Restaurar día actual si existe
     cargarDiaActualPersistido();
-    
+
     // Ejecuta la actualización una vez al iniciar.
     actualizarDatosClima();
 
-    // Programa la tarea para cada hora.
+    // Programa la tarea para cada hora (cada 30 min real: 0/30).
     cron.schedule('0/30 * * * *', actualizarDatosClima);
-    
+
     console.log("🕒 Tarea de actualización de clima programada para ejecutarse cada hora.");
+});
+
+// Middleware de error final
+app.use((err, req, res, _next) => {
+    console.error('[ERROR]', err.stack || err.message);
+    const origin = req.headers.origin;
+    if (origin) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary','Origin'); }
+    else { res.setHeader('Access-Control-Allow-Origin','*'); }
+    res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods','GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.status(500).json({ ok:false, error:'internal', detail: err.message });
 });
