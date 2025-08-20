@@ -1,7 +1,7 @@
 {
   "version": 2,
   "name": "predictor-yacuvina",
-  "installCommand": "cd client && (npm ci --legacy-peer-deps || npm install --legacy-peer-deps)",
+  "installCommand": "cd client && (npm ci || npm install)",
   "buildCommand": "cd client && npm run build",
   "outputDirectory": "client/dist",
   "env": {
