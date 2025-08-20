@@ -7,42 +7,57 @@
   <title>Yacuvina Stats Dashboard</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <!-- Tailwind CDN -->
-  <script>
-    /* Tailwind config (usar tailwind.config en lugar de window.tailwind.config para evitar TypeError) */
-    tailwind.config = { theme:{ extend:{ colors:{ primary:'#0ea5e9', accent:'#6366f1', neon:'#06b6d4', glass:'#1e293b' }, boxShadow:{ glow:'0 0 15px -3px rgba(14,165,233,.6),0 0 30px -5px rgba(99,102,241,.35)' } } } };
-  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Tailwind config: debe ir DESPUÉS del script CDN para que 'tailwind' exista */
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary:'#0ea5e9', accent:'#6366f1', neon:'#06b6d4', glass:'#1e293b' },
+          boxShadow: { glow:'0 0 15px -3px rgba(14,165,233,.6),0 0 30px -5px rgba(99,102,241,.35)' }
+        }
+      }
+    };
+  </script>
   <link rel="stylesheet" href="styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- Cache busting con versión del dashboard -->
-  <script defer src="script.js?v=0.3.0"></script>
+  <script defer src="script.js?v=0.4.1"></script>
 </head>
 <body class="min-h-screen font-sans text-slate-200 bg-[#05070d] relative overflow-x-hidden">
-  <!-- Animated gradient orbs -->
-  <div class="pointer-events-none fixed inset-0 -z-10">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-    <div class="noise-layer"></div>
+  <!-- Background (simplified: orbs optional via class) -->
+  <div class="bg-layer minimal pointer-events-none fixed inset-0 -z-10">
+    <div class="orbs off">
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
+      <div class="noise-layer"></div>
+    </div>
   </div>
-  <header class="backdrop-blur-xl bg-white/5 border-b border-white/10 sticky top-0 z-20">
+  <header class="backdrop-blur-xl bg-white/5 border-b border-white/10 sticky top-0 z-20 secured-content">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-  <h1 class="text-xl md:text-2xl font-semibold tracking-tight flex items-center gap-2 bg-gradient-to-r from-sky-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent drop-shadow">📊 Yacuvina Stats <span id="dashVersion" class="text-xs font-light px-2 py-0.5 rounded-full bg-white/10 border border-white/10">v?</span></h1>
-        <div class="flex flex-wrap gap-2 items-center">
-          <input id="baseUrl" class="i-field" placeholder="https://tu-api.onrender.com" />
-          <input id="adminToken" class="i-field" placeholder="X-Admin-Token (opcional)" />
-          <button id="loadBtn" class="btn-primary">Cargar</button>
-          <button id="autoBtn" data-active="0" class="btn-secondary">Auto 30s</button>
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div class="flex flex-col gap-2">
+          <h1 class="title text-2xl font-semibold tracking-tight">📊 Estadísticas Yacuvina <span id="dashVersion" class="badge">v?</span></h1>
+          <div class="flex flex-wrap gap-2 items-center">
+            <button id="openLogin" class="btn-secondary" title="Iniciar sesión">Admin</button>
+            <button id="logoutBtn" class="btn-secondary hidden" title="Cerrar sesión">Logout</button>
+            <button id="loadBtn" class="btn-primary">Cargar</button>
+            <button id="autoBtn" data-active="0" class="btn-secondary">Auto 30s</button>
+            <button id="themeBtn" class="btn-secondary" title="Cambiar tema">Tema</button>
+            <button id="integridadBtn" class="btn-secondary hidden" title="Ver integridad">Integridad</button>
+            <button id="resetBtn" class="btn-secondary hidden" title="Reset stats">Reset</button>
+          </div>
         </div>
+        <div class="kpi-mini" id="kpiAcumulado"></div>
       </div>
       <small id="status" class="text-xs text-sky-300 font-mono tracking-wide"></small>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-10 flex flex-col gap-14">
-    <!-- KPIs -->
-    <section id="kpiCards" class="grid gap-5 md:grid-cols-3 lg:grid-cols-6"></section>
+  <main class="max-w-7xl mx-auto px-4 py-10 flex flex-col gap-14 secured-content">
+  <!-- KPIs Día / Histórico -->
+  <section id="kpiCards" class="grid gap-4 md:grid-cols-3 lg:grid-cols-6"></section>
 
     <section class="panel">
       <div class="panel-header">
@@ -87,6 +102,23 @@
     </section>
 
     <section class="panel">
+      <div class="panel-header"><h2>Detalle Geo (Hoy)</h2></div>
+      <div class="panel-body overflow-x-auto">
+        <table class="w-full text-xs md:text-sm">
+          <thead class="text-slate-400">
+            <tr class="text-left">
+              <th class="py-1 pr-4">Ciudad</th>
+              <th class="py-1 pr-4">Hits</th>
+              <th class="py-1 pr-4">Únicos</th>
+              <th class="py-1 pr-4">País</th>
+            </tr>
+          </thead>
+          <tbody id="geoDetalleHoy"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
       <div class="panel-header"><h2>JSON Crudo</h2></div>
       <div class="panel-body">
         <pre id="rawJson" class="text-xs"></pre>
@@ -94,8 +126,57 @@
     </section>
   </main>
 
-  <footer class="mt-10 py-8 text-center text-xs text-slate-500/80">
+  <footer class="mt-10 py-8 text-center text-xs text-slate-500/80 secured-content">
     <p>Yacuvina Stats Dashboard externo · <span class="text-sky-400">Tiempo real</span> · Auto refresh disponible</p>
   </footer>
+
+  <!-- Modal Login -->
+  <div id="loginModal" class="fixed inset-0 flex items-center justify-center z-50">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" data-close-login></div>
+    <div class="login-card-wrapper">
+      <div class="login-card">
+        <div class="card-accent"></div>
+        <div class="login-header">
+          <div class="logo">
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="24" fill="url(#gradientDash)"/>
+              <path d="M18 30V18h12v12H18zm2-10v8h8v-8h-8z" fill="white"/>
+              <defs>
+                <linearGradient id="gradientDash" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0ea5e9"/>
+                  <stop offset="100%" stop-color="#6366f1"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <h1>Acceso Admin</h1>
+          <p>Inicia sesión para acciones protegidas</p>
+        </div>
+        <form id="loginForm" class="login-form" autocomplete="on">
+          <div class="form-field">
+            <input type="text" id="loginUser" required placeholder=" " autocomplete="username" />
+            <label for="loginUser">Usuario</label>
+            <div class="field-line"></div>
+            <span class="error-message" id="userErr"></span>
+          </div>
+          <div class="form-field">
+            <input type="password" id="loginPass" required placeholder=" " autocomplete="current-password" />
+            <label for="loginPass">Clave</label>
+            <button type="button" class="password-reveal" id="pwdToggle" aria-label="Mostrar/Ocultar clave">
+              <svg class="eye-show" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4C5.5 4 1.7 7.3 1 10c.7 2.7 4.5 6 9 6s8.3-3.3 9-6c-.7-2.7-4.5-6-9-6zm0 10a4 4 0 110-8 4 4 0 010 8zm0-6a2 2 0 100 4 2 2 0 000-4z" fill="currentColor"/></svg>
+              <svg class="eye-hide" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 3l14 14m-7-7a2 2 0 01-2-2m2 2a2 2 0 002 2m-2-2v.01M10 6a4 4 0 014 4m-4-4a4 4 0 00-4 4m4-4V4m0 10v2m4-6c.7-2.7-3.3-6-8-6m8 6c-.7 2.7-4.5 6-9 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="field-line"></div>
+            <span class="error-message" id="passErr"></span>
+          </div>
+          <button type="submit" id="loginSubmit" class="signin-button">
+            <span class="button-text">Entrar</span>
+            <div class="button-loader"><div class="loader-circle"></div></div>
+          </button>
+          <button type="button" class="btn-secondary w-full" data-close-login>Cancelar</button>
+        </form>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
