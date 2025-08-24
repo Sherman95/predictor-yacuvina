@@ -56,6 +56,70 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-10 flex flex-col gap-14 secured-content">
+  <!-- ===== PREDICCIÓN PRINCIPAL ===== -->
+  <section id="prediccionHero" class="panel">
+    <div class="panel-header">
+      <h2>Pronóstico Atardeceres (Algoritmo Yacuviña 3.0)</h2>
+    </div>
+    <div class="panel-body flex flex-col gap-6">
+      <div id="prediccionResumen" class="grid md:grid-cols-3 gap-5">
+        <div class="p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-2" id="mejorDiaCard">
+          <span class="text-[10px] tracking-widest uppercase text-sky-300 font-semibold">Mejor Día</span>
+          <div class="text-lg font-semibold" id="mejorDiaTitulo">—</div>
+          <div class="text-sm opacity-80" id="mejorDiaRazon"></div>
+          <div class="flex gap-3 mt-auto text-xs">
+            <div><span class="block text-[10px] uppercase text-slate-400">Score</span><span id="mejorDiaScore" class="text-sky-300 font-bold text-lg">–</span></div>
+            <div><span class="block text-[10px] uppercase text-slate-400">Tipo</span><span id="mejorDiaTipo" class="font-semibold">–</span></div>
+            <div><span class="block text-[10px] uppercase text-slate-400">Conf</span><span id="mejorDiaConf" class="font-semibold">–</span></div>
+          </div>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-2">
+          <span class="text-[10px] tracking-widest uppercase text-sky-300 font-semibold">Última Actualización</span>
+          <div id="predLastUpdated" class="text-base font-mono">—</div>
+          <div class="mt-1 text-[11px] text-slate-400">Fuente agregada multi-API. Se recalcula automáticamente.</div>
+          <div class="mt-auto text-xs flex flex-wrap gap-2" id="predBadgeContainer"></div>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-3">
+          <span class="text-[10px] tracking-widest uppercase text-sky-300 font-semibold">Distribución de Scores</span>
+          <canvas id="predScoreSpark" height="70"></canvas>
+          <div class="text-[11px] text-slate-400">Vista rápida (0–100). Colores según categoría.</div>
+        </div>
+      </div>
+      <div class="grid gap-8 lg:grid-cols-2">
+        <div class="p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs tracking-wider font-semibold text-sky-200 uppercase">Tabla Pronóstico</h3>
+            <button id="btnExportPronostico" class="btn-secondary text-[10px] px-2 py-1">CSV</button>
+          </div>
+          <div class="overflow-x-auto max-h-72 border border-white/5 rounded-md">
+            <table class="w-full text-[11px]">
+              <thead class="bg-white/5 text-slate-400">
+                <tr>
+                  <th class="px-2 py-1 text-left">Día</th>
+                  <th class="px-2 py-1 text-left">Fecha</th>
+                  <th class="px-2 py-1 text-left">Score</th>
+                  <th class="px-2 py-1 text-left">Cat</th>
+                  <th class="px-2 py-1 text-left">Tipo</th>
+                  <th class="px-2 py-1 text-left">Bajas</th>
+                  <th class="px-2 py-1 text-left">Medias</th>
+                  <th class="px-2 py-1 text-left">Altas</th>
+                  <th class="px-2 py-1 text-left">Hum</th>
+                  <th class="px-2 py-1 text-left">Vis (km)</th>
+                </tr>
+              </thead>
+              <tbody id="tablaPronostico"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="p-4 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-4">
+          <h3 class="text-xs tracking-wider font-semibold text-sky-200 uppercase">Scores por Día</h3>
+          <canvas id="predScoreChart" height="160"></canvas>
+          <h3 class="text-xs tracking-wider font-semibold text-sky-200 uppercase">Nubes (Bajas/Medias/Altas)</h3>
+          <canvas id="predCloudsChart" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
   <!-- KPIs Día / Histórico -->
   <section id="kpiCards" class="grid gap-4 md:grid-cols-3 lg:grid-cols-6"></section>
 

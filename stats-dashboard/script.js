@@ -58,6 +58,113 @@ function updateAuthUI(){
   $('#resetBtn')?.classList.toggle('hidden', !has);
   document.body.classList.toggle('authenticated', has);
 }
+
+// ====== PREDICCIÓN ======
+async function loadPrediccion(){
+  const base = getBase();
+  const url = base + '/api/prediccion';
+  try{
+    const r = await fetch(url, { cache:'no-store' });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    if(!data.forecast){ console.warn('Prediccion sin forecast', data); return; }
+    renderPrediccion(data);
+  }catch(e){
+    console.error('Prediccion error', e);
+    const el = document.getElementById('prediccionResumen');
+    if(el) el.innerHTML = `<div class="text-rose-400 text-sm">Error predicción: ${e.message}</div>`;
+  }
+}
+
+function categoriaColor(score){
+  if(score>=90) return '#10b981';
+  if(score>=70) return '#0ea5e9';
+  if(score>=50) return '#f59e0b';
+  if(score>=30) return '#f97316';
+  return '#ef4444';
+}
+
+function renderPrediccion(data){
+  // Mejor día = mayor puntajeNumerico
+  const lista = data.forecast.slice();
+  lista.sort((a,b)=> (b.puntajeNumerico||0) - (a.puntajeNumerico||0));
+  const mejor = lista[0];
+  if(mejor){
+    $('#mejorDiaTitulo').textContent = `${mejor.diaSemana} (${mejor.fecha})`;
+    $('#mejorDiaRazon').textContent = mejor.razon?.split(',').slice(0,3).join(', ');
+    $('#mejorDiaScore').textContent = mejor.puntajeNumerico;
+    $('#mejorDiaTipo').textContent = mejor.tipoAtardecer || '-';
+    $('#mejorDiaConf').textContent = (mejor.confianza||0)+'%';
+  }
+  $('#predLastUpdated').textContent = (data.lastUpdated? new Date(data.lastUpdated).toLocaleString() : '—');
+  const badgeWrap = document.getElementById('predBadgeContainer');
+  if(badgeWrap){
+    badgeWrap.innerHTML = '';
+    const cats = {};
+    data.forecast.forEach(f=>{ cats[f.prediccion]= (cats[f.prediccion]||0)+1; });
+    badgeWrap.innerHTML = Object.entries(cats).map(([c,n])=>`<span class="px-2 py-1 rounded-md text-[10px] bg-white/10">${c}: ${n}</span>`).join('');
+  }
+  // Tabla
+  const tbody = document.getElementById('tablaPronostico');
+  if(tbody){
+    tbody.innerHTML = data.forecast.map(f=>{
+      return `<tr class="border-b border-white/5 hover:bg-white/5 transition" title="${(f.razon||'').replace(/\"/g,'')}">
+        <td class="px-2 py-1">${f.diaSemana||''}</td>
+        <td class="px-2 py-1">${f.fecha||''}</td>
+        <td class="px-2 py-1 font-semibold" style="color:${categoriaColor(f.puntajeNumerico||0)}">${f.puntajeNumerico??'–'}</td>
+        <td class="px-2 py-1">${f.prediccion||''}</td>
+        <td class="px-2 py-1">${f.tipoAtardecer||''}</td>
+        <td class="px-2 py-1">${f.nubesBajas??'-'}%</td>
+        <td class="px-2 py-1">${f.nubesMedias??'-'}%</td>
+        <td class="px-2 py-1">${f.nubesAltas??'-'}%</td>
+        <td class="px-2 py-1">${f.humedad??'-'}%</td>
+        <td class="px-2 py-1">${f.visibilidad??'-'}</td>
+      </tr>`;
+    }).join('');
+  }
+  // Charts
+  const labels = data.forecast.map(f=>f.diaSemana||'');
+  const scores = data.forecast.map(f=>f.puntajeNumerico||0);
+  ensureChart('predScoreChart', {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Score', data:scores, backgroundColor:scores.map(categoriaColor) }] },
+    options:{responsive:true, plugins:{legend:{labels:{color:'#e2e8f0'}}}, scales:{x:{ticks:{color:'#94a3b8'}}, y:{ticks:{color:'#94a3b8'}, suggestedMin:0, suggestedMax:100}}}
+  });
+  ensureChart('predCloudsChart', {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Bajas', data:data.forecast.map(f=>f.nubesBajas||0), borderColor:'#0ea5e9', backgroundColor:'rgba(14,165,233,.25)', tension:.3 },
+      { label:'Medias', data:data.forecast.map(f=>f.nubesMedias||0), borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,.25)', tension:.3 },
+      { label:'Altas', data:data.forecast.map(f=>f.nubesAltas||0), borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.25)', tension:.3 }
+    ]},
+    options:{responsive:true, plugins:{legend:{labels:{color:'#e2e8f0'}}}, scales:{x:{ticks:{color:'#94a3b8'}}, y:{ticks:{color:'#94a3b8'}, suggestedMin:0, suggestedMax:100}}}
+  });
+  // Spark line
+  const sparkCtx = document.getElementById('predScoreSpark')?.getContext('2d');
+  if(sparkCtx){
+    if(charts['predScoreSpark']) charts['predScoreSpark'].destroy();
+    charts['predScoreSpark'] = new Chart(sparkCtx, {
+      type:'line', data:{ labels: data.forecast.map((_,i)=>i+1), datasets:[{ data:scores, borderColor:'#10b981', fill:false, tension:.35 }]},
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{display:false}, y:{display:false}}, elements:{point:{radius:2}}}
+    });
+  }
+}
+
+function exportPronosticoCSV(){
+  const rows = document.querySelectorAll('#tablaPronostico tr');
+  if(!rows.length) return;
+  const header = ['Dia','Fecha','Score','Prediccion','Tipo','NubesBajas','NubesMedias','NubesAltas','Humedad','Visibilidad'];
+  const data = [header.join(',')];
+  rows.forEach(r=>{
+    const cols=[...r.children].map(td=> '"'+td.textContent.replace(/"/g,'""')+'"');
+    data.push(cols.join(','));
+  });
+  const blob = new Blob([data.join('\n')], { type:'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pronostico.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
 function buildKPI(data){
   const kpis = [
     {k:'total', t:'Hits API (hoy)', v:data.total},
@@ -331,6 +438,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   $('#pwdToggle').addEventListener('click', togglePwd);
   document.getElementById('fullLogBtn')?.addEventListener('click', showFullLog);
   document.getElementById('collapseLogBtn')?.addEventListener('click', toggleCollapseLog);
+  document.getElementById('btnExportPronostico')?.addEventListener('click', exportPronosticoCSV);
+  // Cargar predicción al inicio (si auth ya está, igualmente es pública)
+  loadPrediccion();
   document.querySelectorAll('[data-close-login]').forEach(el=>el.addEventListener('click', closeLogin));
   // Si ya hay token en storage (recarga), autenticar visualmente
   if(getJWT()) { updateAuthUI(); closeLogin(); }
