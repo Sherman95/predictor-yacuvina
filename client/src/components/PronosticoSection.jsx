@@ -70,14 +70,14 @@ function PronosticoSection({ cargando, error, pronostico, mejorDia }) {
     <>
       <MejorDiaBanner mejorDia={mejorDia} />
       
-      <div className="pronostico-grid" role="region" aria-label="Pronóstico deslizable" ref={gridRef}>
+  <div className="pronostico-grid" role="region" aria-label="Pronóstico" ref={gridRef}>
         {/* Ghost padding solo en mobile (controlado vía clase y media query) */}
         <div className="ghost-pad" aria-hidden="true" />
         {pronostico.map((dia, index) => (
           <PronosticoCard key={dia.fecha || index} dia={dia} />
         ))}
         <div className="ghost-pad" aria-hidden="true" />
-        {hintVisible && <span className="hint-scroll" aria-hidden="true">Desliza →</span>}
+  {/* Hint de desplazamiento eliminado para interfaz limpia */}
       </div>
       <div className="carousel-dots" aria-label="Navegación pronóstico">
         {pronostico.map((_, i) => (

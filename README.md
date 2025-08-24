@@ -1,10 +1,10 @@
-# 🌅 Yacuviña Sunset Predictor
+# 🌅 Yacuviña Sunset Predictor & Analytics
 
-> Predicción inteligente de atardeceres ("Mar de Nubes" vs "Despejado") para el mirador arqueológico de Yacuviña – impulsado por el **Algoritmo Yacuviña 3.0**.
+Predicción especializada de atardeceres ("Mar de Nubes" vs "Despejado") y panel analítico de visitas/uso para el mirador arqueológico de Yacuviña – impulsado por el **Algoritmo Yacuviña 3.0** y un sistema de métricas en tiempo (casi) real.
 
 ---
 ## ✨ Resumen Ejecutivo
-Yacuviña Sunset Predictor unifica múltiples fuentes meteorológicas, las normaliza y ejecuta un motor de evaluación especializado que determina:
+El sistema unifica múltiples fuentes meteorológicas, las normaliza y ejecuta un motor de evaluación especializado que determina:
 - Probabilidad de experimentar un espectacular **Mar de Nubes** (nubes bajas densas bajo el mirador)
 - Calidad de un **Atardecer Despejado Panorámico** (visibilidad y colores óptimos)
 - Escenarios mixtos evaluados automáticamente (elige el mejor)
@@ -13,7 +13,7 @@ El resultado: un puntaje categorizado (Excelente → Muy Malo), factores positiv
 
 ---
 ## 🧠 Algoritmo Yacuviña 3.0
-Archivo principal: `server/services/weatherService.js`
+Archivo principal: `server/services/weatherService.js` (núcleo de scoring – no modificar sin comprender los principios meteorológicos de nubosidad estratificada).
 
 ### Flujo Conceptual
 1. Recolección simultánea (Open-Meteo, OpenWeather, AccuWeather)
@@ -46,7 +46,7 @@ Archivo principal: `server/services/weatherService.js`
 
 ---
 ## 🏗 Arquitectura
-Monorepo: `client/` (Vite + React) + `server/` (Express)
+Monorepo: `client/` (Vite + React) + `server/` (Express). Incluye además un dashboard externo de analítica (stats, pronóstico enfocado y logs) desplegado junto al backend.
 
 | Capa | Propósito | Notas |
 |------|-----------|-------|
@@ -77,7 +77,7 @@ APIs externas ─▶ Adaptadores ─▶ Combinar ─▶ Score Algoritmo ─▶ p
 |---------|-------------|
 | Header | Card translúcida con identidad y chips de estados clave |
 | Clima Actual | Vista compacta (temp + categoría + icono) + modo expandido con métricas detalladas |
-| Pronóstico 7 Días | Carrusel (mobile) con spotlight activo + indicadores; tarjetas con resumen y factores |
+| Pronóstico 7 Días | Grid/carrusel móvil con tarjetas enriquecidas (resumen + factores) |
 | Mejor Día | Banner resaltado dinámicamente (score máximo) |
 | Galería | Imágenes de referencia del sitio (mobile swipe / desktop grid) |
 | Footer | Minimal en mobile, informativo en desktop |
@@ -108,7 +108,7 @@ client/
 ```
 
 ---
-## 🔌 Endpoints Principales
+## 🔌 Endpoints Principales (Predicción / Clima)
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/prediccion` | Pronóstico 7 días (algoritmo aplicado) |
@@ -186,19 +186,26 @@ Patrones:
 - Ghost padding móvil para centrar primer/último card sin gap en desktop
 
 ---
-## 🔐 Seguridad (Básico)
-- Sin almacenamiento de usuario ni auth (read-only público)
-- Claves de API sólo en backend (excepto endpoint URL en cliente)
-- CORS restringido a dominios conocidos (localhost + producción)
+## 🔐 Seguridad / Métricas
+Backend expone endpoints de métricas protegidos con JWT (login/refresh/me/logout). Las predicciones siguen siendo públicas.
+
+Resumen:
+- Claves de APIs meteorológicas sólo en backend
+- CORS restringido (localhost + dominios producción)
+- Contador de visitas (diario + acumulado) + geolocalización (city/country) + visit log detallado
+- Integridad de datos: endpoint de verificación y consolidación
 
 ---
 ## 🚢 Deploy
 | Tier | Plataforma | Config |
 |------|-----------|--------|
-| Backend | Render | `render.yaml` (build + start scripts) |
-| Frontend | Vercel | Root `client/`, build `npm run build` |
+| Backend API + Dashboard | Render | `render.yaml` (cd server && npm start) |
+| Frontend App (React) | Vercel | Directorio `client/` |
 
-Pasos resumidos: ver `DEPLOY_GUIDE.md` para detalle completo.
+Notas:
+- Vercel: se fuerza instalación/build dentro de `client/` (ver `vercel.json`)
+- Estrategias de build resilientes (rollup fijado, esbuild explícito) para evitar fallos de binarios
+- Cache JSON persistida en filesystem efímero (aceptable para prototipo; considerar futura DB)
 
 ---
 ## 🧭 Troubleshooting Express
@@ -212,15 +219,17 @@ Pasos resumidos: ver `DEPLOY_GUIDE.md` para detalle completo.
 ## 📈 Futuras Mejores Ideas
 - Persistencia de preferencia (expandido/compacto) vía localStorage
 - Lazy import de galería y secciones pesadas
-- Gesture controls (swipe expand/collapse)
-- Modo "Lectura Rápida" (ocultar factores largos hasta tap)
+- Tooltips de factores explicativos (por qué subió/bajó la puntuación)
+- Delta día vs día (tendencias)
+- Importación histórica y archivado (rotación de logs)
 - Internacionalización (es/en)
 
 ---
 ## 🔍 Calidad y Estilo de Código
-- Convención commit: `feat|fix|refactor(scope): mensaje`
+- Convención commit: `feat|fix|refactor|style|chore(scope): mensaje`
 - Servicios desacoplados: cada API adaptada antes de combinar
-- Logging con timestamps + emojis para escanear fácilmente
+- Logging con timestamps + emojis (rápido de escanear)
+- Evitar side-effects en servicios de cálculo (puro + testable)
 
 ---
 ## 🧩 Fragmento Clave (Evaluación Doble)
