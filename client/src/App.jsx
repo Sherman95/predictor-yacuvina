@@ -22,9 +22,11 @@ import imagen4 from './assets/yacuvina4.png';
 const MAP_LAT = -3.57284828;
 const MAP_LNG = -79.68927961;
 // Enlace Street View original proporcionado por el usuario (vista 360 exacta)
-const rawStreetViewLink = "https://www.google.com/maps/@-3.5728483,-79.6892796,3a,90y,337.15h,51.68t/data=!3m8!1e1!3m6!1sCIHM0ogKEICAgIC7kYKx_QE!2e10!3e11!6shttps:%2F%2Flh3.googleusercontent.com%2Fgpms-cs-s%2FAB8u6Hb2c2n7D_MmhmLjCDKXZ_RWIJ0CUXAM6ummSsDAp-YtBPfdweuhOumDFsehhuC3ubyY-CNgyRlg8_kTWbZ91HKJHEY3fLy68KbmmRNHy9gxP2arVWMHfBSTWyPeAzg_lymsvBk-kg%3Dw900-h600-k-no-pi38.322263135479254-ya337.15245327169305-ro0-fo100!7i4096!8i2048?entry=ttu";
-// Para embeber forzamos output=embed (funciona en la mayoría de vistas públicas de Maps / Street View)
-const streetViewEmbedUrl = rawStreetViewLink + (rawStreetViewLink.includes('?') ? '&' : '?') + 'output=embed';
+const rawStreetViewLink = "https://www.google.com/maps/@-3.5728483,-79.6892796,3a,90y,337.15h,51.68t/data=!3m8!1e1!3m6!1sCIHM0ogKEICAgIC7kYKx_QE!2e10!3e11!6shttps:%2F%2Flh3.googleusercontent.com%2Fgpms-cs-s%2FAB8u6Hb2c2n7D_MmhmLjCDKXZ_RWIJ0CUXAM6ummSsDAp-YtBPfdweuhOumDFsehhuC3ubyY-CNgyRlg8_kTWbZ91HKJHEY3fLy68KbmmRNHy9gxP2arVWMHfBSTWyPeAzg_lymsvBk-kg%3Dw900-h600-k-no-pi38.322263135479254-ya337.15245327169305-ro0-fo100!7i4096!8i2048";
+// Iframe oficial de Street View usa el endpoint /maps/embed con un parámetro pb codificado.
+// Construimos pb manualmente a partir de: photoId, lat, lng, heading (y), pitch (t) y FOV fijo.
+// Nota: Si Google cambia el formato, se puede reemplazar por un pb nuevo copiado desde "Compartir > Insertar un mapa".
+const streetViewEmbedUrl = "https://www.google.com/maps/embed?pb=!4v0!6m8!1m7!1sCIHM0ogKEICAgIC7kYKx_QE!2m2!1d-3.5728483!2d-79.6892796!3f337.15!4f51.68!5f0.7820865974627469";
 // Mapa fallback simple (por coordenadas)
 const mapsEmbedUrl = `https://www.google.com/maps?q=${MAP_LAT},${MAP_LNG}&z=16&output=embed`;
 const mapsExternalLink = rawStreetViewLink; // external link abre directamente la vista 360
@@ -42,7 +44,7 @@ function Vista360Section() {
     <section className="galeria-container vista360-container" aria-label="Vista 360° y mapa del columpio Tocando el Cielo">
       <h2>Vista 360° Tocando el Cielo</h2>
       <p className="vista360-descripcion">
-        Explora la panorámica 360°. Si no carga la vista inmersiva se mostrará el mapa. Como último recurso usa el enlace externo.
+        Vista inmersiva: si Google bloquea el iframe verás el mapa estándar; si también falla usa el enlace externo.
       </p>
       <div className="vista360-frame-wrapper">
         {showStreetView && (
@@ -50,6 +52,7 @@ function Vista360Section() {
             title="Street View 360 Columpio Tocando el Cielo"
             src={streetViewEmbedUrl}
             loading="lazy"
+            allow="fullscreen"
             allowFullScreen
             referrerPolicy="no-referrer-when-downgrade"
             onError={() => setStreetViewBlocked(true)}
@@ -67,7 +70,7 @@ function Vista360Section() {
         )}
         {streetViewBlocked && mapBlocked && (
           <div className="vista360-fallback" role="alert">
-            <p>No se pudo cargar la vista 360 ni el mapa (restricción de red). Abre el enlace directo.</p>
+            <p>No se pudo cargar la vista 360 ni el mapa (posible restricción corporativa / navegador). Abre el enlace directo.</p>
             <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link alt">🗺 Abrir en Google Maps</a>
           </div>
         )}
