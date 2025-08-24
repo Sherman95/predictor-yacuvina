@@ -277,3 +277,128 @@ Con soporte algorítmico especializado en clasificación de condiciones de atard
 
 ---
 > "El mejor atardecer no siempre es el más despejado; a veces el mar de nubes crea la magia." 🔭
+
+---
+## 📊 Panel de Estadísticas y Analítica (Dashboard Externo)
+
+El proyecto incluye un dashboard estático desacoplado (`/stats-dashboard`) para monitorear en tiempo real:
+- Visitas del día (total / únicas) y acumuladas (nunca se reinician).
+- Distribución geográfica (ciudad / país) hoy e histórica agregada.
+- Rutas más solicitadas.
+- Log detallado de las últimas N visitas con hora exacta (ISO + hora local).
+- Métricas del sitio vs llamadas técnicas (beacon separado de la API general).
+- Pronóstico resaltado (hero del mejor día, distribución de categorías, tablas y gráficos de nubes / score).
+
+### 🧭 Flujo de Uso Rápido (Dashboard)
+1. Hospeda el contenido de `stats-dashboard/` en GitHub Pages / Vercel / Netlify o ábrelo local.
+2. Ingresa la URL base del backend (Render) en el campo inicial.
+3. (Opcional) Loguéate para obtener JWT y acceder a endpoints protegidos (`/api/_stats/*`).
+4. Activa auto-refresco (30s) para monitoreo continuo.
+
+### 🔐 Autenticación (Stats)
+Los endpoints `/api/_stats/visitas`, `/api/_stats/visitas/log`, `/api/_stats/reset`, `/api/_stats/integridad` requieren JWT emitido por `/api/auth/login` (con credenciales configuradas en variables de entorno). Flujo:
+1. POST `/api/auth/login` (recibe access + refresh tokens).
+2. GET `/api/auth/me` (verificación).
+3. POST `/api/auth/refresh` (renueva access token cuando expira).
+4. POST `/api/auth/logout` (invalida refresh token actual).
+
+### 📥 Endpoints de Estadísticas
+| Método | Ruta | Autenticación | Descripción |
+|--------|------|---------------|-------------|
+| GET | `/api/_stats/visitas` | JWT | Snapshot día actual + histórico + mensual + geo + acumulado + visitLog parcial |
+| GET | `/api/_stats/visitas/log` | JWT | Log completo (últimos registros hasta MAX) |
+| POST | `/api/_stats/reset` | JWT | Reinicia contadores del día (para pruebas) |
+| GET | `/api/_stats/integridad` | JWT | Revisión estructural del histórico (detección duplicados/corrupción) |
+| POST | `/api/visit-beacon` | Público | Marca visita de usuario real (separada de llamadas técnicas) |
+
+### 🗃 Estructura de Respuesta `/api/_stats/visitas` (Resumen)
+```jsonc
+{
+  "version": "2.3.0",
+  "fecha": "2025-08-24",
+  "total": 123,            // Hits API hoy
+  "unicos": 87,            // Visitantes únicos API hoy (IP+UA)
+  "rutas": { "/api/prediccion": 90, "/api/current-weather": 33 },
+  "siteVisitorsHoy": 55,   // Únicos reales (beacon)
+  "siteHitsHoy": 60,
+  "acumulado": { "total": 5432, "unicos": 2110 },
+  "porMes": { "2025-08": { "total": 900, "unicos": 640 } },
+  "geoHoy": { "porCiudad": { "Loja": 10 }, "porPais": { "Ecuador": 12 } },
+  "geoHistorico": { ... },
+  "visitLogLast": [ { "time": "2025-08-24T22:11:09Z", "hora": "17:11:09", "ruta": "/api/prediccion", "tipo": "api" } ],
+  "visitLogMeta": { "total": 600, "last": 100, "placeholders": 0 }
+}
+```
+
+### 🧾 Visit Log
+- `tipo`: api | site | legacy
+- `legacy` son placeholders para visitas antes de introducir timestamps precisos.
+- Se recorta manteniendo las últimas `MAX_VISIT_LOG` (configurable por env).
+
+### 🌐 Geolocalización
+- Proveedor configurable (`ip-api`, `ipapi`, `ipwhois`).
+- Cache en memoria 12h por IP.
+- Cuenta únicos por ciudad y país usando sets en memoria (reseteo diario, histórico se consolida al rotar día).
+
+### 🧮 Estrategia de Conteo
+- Identificador único= IP + User-Agent.
+- Contadores diarios reinician automáticamente (persistidos en `visitas-current.json`).
+- `acumulado` NUNCA se reinicia (requisito del proyecto: “no quiero reset diario”).
+- Día anterior se vuelca a `visitas-historico.json` al detectar cambio de fecha.
+
+### ♻️ Persistencia
+Archivos en `server/`:
+- `visitas-current.json`: snapshot del día (incluye visitLog parcial, geo y acumulado).
+- `visitas-historico.json`: histórico multi-día (cada día como clave ISO).
+- `pronostico.json`: forecast evaluado (actualizado por tarea programada).
+
+### ⏱ Cron / Actualización de Clima
+`node-cron` ejecuta `actualizarDatosClima` cada 30 minutos (`0/30 * * * *`). Se carga una vez al iniciar.
+
+### 📦 Caching y Eficiencia
+- Debounce de persistencia (3s) para evitar escrituras excesivas.
+- Reuso de geolocalización en memoria.
+- Distinción llamadas técnicas vs vistas reales con `beacon`.
+
+### 📊 Dashboard de Predicción Integrado
+El dashboard ahora prioriza la predicción: hero con mejor día, badges de distribución de categorías, gráfico de puntajes, gráfico de capas de nubes, sparkline y tabla detallada (exportable CSV).
+
+### 🛡 Consideraciones de Producción Futuras
+- Migrar persistencia a base de datos (SQLite/Postgres) para evitar pérdida en despliegues transitorios.
+- Paginación y filtros en visit log.
+- Agregar rate limiting por IP a endpoints públicos.
+- Auto-renovación de access token en dashboard (refresh silencioso).
+
+### 🔧 Variables de Entorno Clave (Stats)
+| Variable | Descripción | Default |
+|----------|-------------|---------|
+| `MAX_VISIT_LOG` | Máximo de registros en memoria | 20000 |
+| `VISIT_LOG_LAST` | Cantidad a devolver en `visitLogLast` | 100 |
+| `VISIT_LOG_PLACEHOLDER_CAP` | Máx placeholders generados en migración | 1000 |
+| `GEO_PROVIDER` | Proveedor geolocalización | ip-api |
+
+### 🧪 Ejemplos Rápidos (Stats)
+```bash
+curl -H "Authorization: Bearer <ACCESS>" https://<backend>/api/_stats/visitas | jq '.acumulado'
+curl -H "Authorization: Bearer <ACCESS>" https://<backend>/api/_stats/visitas/log | jq '.data[0]'
+curl -X POST -H "Authorization: Bearer <ACCESS>" https://<backend>/api/_stats/reset
+```
+
+---
+## 🗂 Carpeta `stats-dashboard/`
+| Archivo | Propósito |
+|---------|-----------|
+| `index.html` | Estructura UI + secciones (predicción, KPIs, geo, logs) |
+| `script.js` | Fetch de APIs, render dinámico, charts, CSV export |
+| `styles.css` | Tema ligero adaptable (claro/oscuro opcional) |
+| `README.md` | Instrucciones de despliegue rápido |
+
+---
+## 🛡 Limitaciones y Advertencias
+- Persistencia basada en filesystem: reinicios pueden perder el día en curso si no se guardó snapshot.
+- Geo se basa en IP pública -> NAT / mobile carriers pueden sesgar datos.
+- No se anonimiza IP (se mantiene sólo hash en sets en memoria, no se persiste la IP completa en histórico).
+
+---
+## 📌 Resumen del Valor Añadido
+Predicción meteorológica especializada + observabilidad de uso (analytics) en un mismo repositorio con despliegues desacoplados y bajo costo operativo.
