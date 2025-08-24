@@ -26,7 +26,8 @@ const MAP_LNG = -79.68927961;
 const rawStreetViewLink = "https://www.google.com/maps/@-3.5728483,-79.6892796,3a,90y,337.15h,51.68t/data=!3m8!1e1!3m6!1sCIHM0ogKEICAgIC7kYKx_QE!2e10!3e11!6shttps:%2F%2Flh3.googleusercontent.com%2Fgpms-cs-s%2FAB8u6Hb2c2n7D_MmhmLjCDKXZ_RWIJ0CUXAM6ummSsDAp-YtBPfdweuhOumDFsehhuC3ubyY-CNgyRlg8_kTWbZ91HKJHEY3fLy68KbmmRNHy9gxP2arVWMHfBSTWyPeAzg_lymsvBk-kg%3Dw900-h600-k-no-pi38.322263135479254-ya337.15245327169305-ro0-fo100!7i4096!8i2048";
 // Iframe oficial de Street View usa el endpoint /maps/embed con un parámetro pb codificado.
 // pb aquí es aproximado; si no muestra 360 correctamente se puede regenerar desde Google Maps > Compartir > Insertar.
-const streetViewEmbedUrl = "https://www.google.com/maps/embed?pb=!4v0!6m8!1m7!1sCIHM0ogKEICAgIC7kYKx_QE!2m2!1d-3.5728483!2d-79.6892796!3f337.15!4f51.68!5f0.7820865974627469";
+// Nuevo iframe Street View proporcionado por el usuario (sustituye al anterior pb) para forzar vista 360 correcta.
+const streetViewEmbedUrl = "https://www.google.com/maps/embed?pb=!4v1756053812430!6m8!1m7!1sCAoSF0NJSE0wb2dLRUlDQWdJQzdrWUt4X1FF!2m2!1d-3.572848275839934!2d-79.6892796068284!3f19.88743!4f0.11257000000000517!5f0.7820865974627469";
 // Método alternativo usando el enlace original con output=svembed (a veces fuerza modo panorámico cuando el pb cae a 2D)
 const streetViewSvEmbedUrl = rawStreetViewLink + (rawStreetViewLink.includes('?') ? '&' : '?') + 'output=svembed';
 // Mapa fallback simple (por coordenadas)
