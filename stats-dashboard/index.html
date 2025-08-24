@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- Cache busting con versión del dashboard -->
-  <script defer src="script.js?v=0.4.1"></script>
+  <script defer src="script.js?v=0.4.2"></script>
 </head>
 <body class="min-h-screen font-sans text-slate-200 bg-[#05070d] relative overflow-x-hidden">
   <!-- Background (simplified: orbs optional via class) -->
@@ -136,10 +136,11 @@
       </div>
     </section>
 
-    <section class="panel">
+  <section class="panel">
       <div class="panel-header"><h2>JSON Crudo</h2></div>
       <div class="panel-body">
         <pre id="rawJson" class="text-xs"></pre>
+    <p class="mt-2 text-[10px] text-slate-500">Horas mostradas en visitas usan zona local del navegador. Backend guarda hora local (es-EC) y ISO.</p>
       </div>
     </section>
   </main>

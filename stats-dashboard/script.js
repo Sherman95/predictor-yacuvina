@@ -157,12 +157,14 @@ function renderVisitLog(data){
   const meta = data.visitLogMeta || {};
   metaEl.textContent = `Mostrando últimas ${arr.length} / total ${meta.total||0} (placeholders=${meta.placeholders||0})`;
   // Mostrar más reciente arriba: invertimos
-  const render = arr.slice().reverse().map(v=>{
-    const hora = v.hora || '--:--:--';
-    const ruta = v.ruta || '-';
-    const tipo = v.tipo || 'api';
-    return `<li><span class="text-sky-300">${hora}</span> <span class="text-indigo-300">${tipo}</span> <span class="text-slate-100">${ruta}</span></li>`;
-  });
+    const render = arr.slice().reverse().map(v => {
+      const hora = v.hora || '--:--:--';
+      const iso = v.time || '';
+      const ruta = v.ruta || '-';
+      const tipo = v.tipo || 'api';
+      const title = iso ? `title="${iso}"` : '';
+      return `<li ${title}><span class="text-sky-300">${hora}</span> <span class="text-indigo-300">${tipo}</span> <span class="text-slate-100">${ruta}</span></li>`;
+    });
   list.innerHTML = render.join('') || '<li>Sin datos</li>';
 }
 
@@ -188,12 +190,14 @@ async function showFullLog(){
   try {
     const data = await fetchFullLog();
     const arr = data.data || [];
-    list.innerHTML = arr.slice().reverse().map(v=>{
-      const hora = v.hora || '--:--:--';
-      const ruta = v.ruta || '-';
-      const tipo = v.tipo || 'api';
-      return `<li><span class="text-sky-300">${hora}</span> <span class="text-indigo-300">${tipo}</span> <span class="text-slate-100">${ruta}</span></li>`;
-    }).join('') || '<li>Sin datos</li>';
+      list.innerHTML = arr.slice().reverse().map(v => {
+        const hora = v.hora || '--:--:--';
+        const iso = v.time || '';
+        const ruta = v.ruta || '-';
+        const tipo = v.tipo || 'api';
+        const title = iso ? `title="${iso}"` : '';
+        return `<li ${title}><span class="text-sky-300">${hora}</span> <span class="text-indigo-300">${tipo}</span> <span class="text-slate-100">${ruta}</span></li>`;
+      }).join('') || '<li>Sin datos</li>';
   } catch(e){
     list.innerHTML = `<li class="text-rose-400">Error: ${e.message}</li>`;
   }
