@@ -23,6 +23,10 @@ let BASE_URL = 'https://yacuvina-api-sherman95.onrender.com'; // primaria Render
 })();
 const $ = sel => document.querySelector(sel);
 let charts = {};
+// Cache temporal del log completo (para evitar múltiples llamadas seguidas)
+let fullLogCache = null;
+let fullLogCacheTime = 0;
+const FULL_LOG_TTL_MS = 15000;
 
 // ====== THEME ======
 function initTheme(){
@@ -145,6 +149,64 @@ function renderGeo(data){
   }
 }
 
+function renderVisitLog(data){
+  const list = document.getElementById('visitLogList');
+  const metaEl = document.getElementById('visitLogMeta');
+  if(!list || !metaEl) return;
+  const arr = data.visitLogLast || [];
+  const meta = data.visitLogMeta || {};
+  metaEl.textContent = `Mostrando últimas ${arr.length} / total ${meta.total||0} (placeholders=${meta.placeholders||0})`;
+  // Mostrar más reciente arriba: invertimos
+  const render = arr.slice().reverse().map(v=>{
+    const hora = v.hora || '--:--:--';
+    const ruta = v.ruta || '-';
+    const tipo = v.tipo || 'api';
+    return `<li><span class="text-sky-300">${hora}</span> <span class="text-indigo-300">${tipo}</span> <span class="text-slate-100">${ruta}</span></li>`;
+  });
+  list.innerHTML = render.join('') || '<li>Sin datos</li>';
+}
+
+async function fetchFullLog(){
+  const now = Date.now();
+  if(fullLogCache && (now - fullLogCacheTime) < FULL_LOG_TTL_MS) return fullLogCache;
+  const base = getBase();
+  const jwt = getJWT();
+  const resp = await fetch(base + '/api/_stats/visitas/log', { headers:{ Authorization:'Bearer '+jwt }, cache:'no-store' });
+  if(!resp.ok) throw new Error('HTTP '+resp.status);
+  const data = await resp.json();
+  fullLogCache = data;
+  fullLogCacheTime = now;
+  return data;
+}
+
+async function showFullLog(){
+  const wrap = document.getElementById('visitLogFullWrapper');
+  const list = document.getElementById('visitLogFull');
+  if(!wrap || !list) return;
+  wrap.classList.remove('hidden');
+  list.innerHTML = '<li class="animate-pulse text-slate-400">Cargando log completo…</li>';
+  try {
+    const data = await fetchFullLog();
+    const arr = data.data || [];
+    list.innerHTML = arr.slice().reverse().map(v=>{
+      const hora = v.hora || '--:--:--';
+      const ruta = v.ruta || '-';
+      const tipo = v.tipo || 'api';
+      return `<li><span class="text-sky-300">${hora}</span> <span class="text-indigo-300">${tipo}</span> <span class="text-slate-100">${ruta}</span></li>`;
+    }).join('') || '<li>Sin datos</li>';
+  } catch(e){
+    list.innerHTML = `<li class="text-rose-400">Error: ${e.message}</li>`;
+  }
+}
+
+function toggleCollapseLog(){
+  const body = document.getElementById('visitLogList');
+  const btn = document.getElementById('collapseLogBtn');
+  if(!body || !btn) return;
+  body.classList.toggle('hidden');
+  btn.textContent = body.classList.contains('hidden')? 'Mostrar':'Ocultar';
+}
+
 async function load(){
   if(!getJWT()){ $('#status').textContent='Necesitas iniciar sesión'; return; }
   const base = getBase();
@@ -176,6 +238,7 @@ async function load(){
     renderMonthChart(data);
     renderRutas(data);
     renderGeo(data);
+  renderVisitLog(data);
     $('#rawJson').textContent = JSON.stringify(data,null,2);
     const ahora = new Date().toLocaleTimeString();
     $('#status').textContent = 'Última actualización ' + ahora + ' (version '+data.version+')';
@@ -262,6 +325,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   $('#resetBtn').addEventListener('click', doReset);
   $('#loginForm').addEventListener('submit', doLogin);
   $('#pwdToggle').addEventListener('click', togglePwd);
+  document.getElementById('fullLogBtn')?.addEventListener('click', showFullLog);
+  document.getElementById('collapseLogBtn')?.addEventListener('click', toggleCollapseLog);
   document.querySelectorAll('[data-close-login]').forEach(el=>el.addEventListener('click', closeLogin));
   // Si ya hay token en storage (recarga), autenticar visualmente
   if(getJWT()) { updateAuthUI(); closeLogin(); }

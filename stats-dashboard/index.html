@@ -119,6 +119,24 @@
     </section>
 
     <section class="panel">
+      <div class="panel-header flex items-center justify-between">
+        <h2>Últimas Visitas (Hoy)</h2>
+        <div class="flex gap-2">
+          <button id="fullLogBtn" class="btn-secondary text-xs" title="Ver log completo del día">Log completo</button>
+          <button id="collapseLogBtn" class="btn-secondary text-xs" title="Mostrar/Ocultar lista">Ocultar</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div id="visitLogMeta" class="text-[11px] mb-2 text-slate-400 font-mono"></div>
+        <ol id="visitLogList" class="text-xs font-mono space-y-1 max-h-64 overflow-auto pr-2 border border-white/5 rounded-md p-2 bg-white/5"></ol>
+        <div id="visitLogFullWrapper" class="mt-4 hidden">
+          <h3 class="mb-1 font-semibold text-sm">Log Completo</h3>
+          <ol id="visitLogFull" class="text-[11px] font-mono space-y-1 max-h-72 overflow-auto pr-2 border border-white/5 rounded-md p-2 bg-white/5"></ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
       <div class="panel-header"><h2>JSON Crudo</h2></div>
       <div class="panel-body">
         <pre id="rawJson" class="text-xs"></pre>
