@@ -12,6 +12,7 @@ import InfoSection from './components/InfoSection';
 import ClimaActual from './components/ClimaActual';
 import PronosticoSection from './components/PronosticoSection';
 import Footer from './components/Footer';
+import StreetView360 from './components/StreetView360';
 
 // Imágenes y otras secciones estáticas
 import imagen1 from './assets/yacuvina1.jpg';
@@ -46,6 +47,7 @@ function Vista360Section() {
   const showStreetPB = mode === 'pb' && !streetViewBlocked;
   const showStreetSV = mode === 'sv' && !streetViewBlockedAlt;
   const showMap = mode === 'map' && !mapBlocked;
+  const showApiStreetView = mode === 'api';
   return (
     <section className="galeria-container vista360-container" aria-label="Vista 360° y mapa del columpio Tocando el Cielo">
       <h2>Vista 360° Tocando el Cielo</h2>
@@ -87,6 +89,9 @@ function Vista360Section() {
             onError={() => setMapBlocked(true)}
           />
         )}
+        {showApiStreetView && (
+          <StreetView360 onFail={() => setMode('map')} />
+        )}
         {(streetViewBlocked || streetViewBlockedAlt) && mapBlocked && (
           <div className="vista360-fallback" role="alert">
             <p>No se pudo cargar la vista 360 ni el mapa (posible restricción corporativa / navegador). Abre el enlace directo.</p>
@@ -104,6 +109,9 @@ function Vista360Section() {
         <button type="button" className="vista360-link" onClick={() => setMode('map')} disabled={mode==='map'} style={{opacity: mode==='map'?0.6:1, marginLeft:'0.7rem'}}>
           Mapa 2D
         </button>
+        <button type="button" className="vista360-link" onClick={() => setMode('api')} disabled={mode==='api'} style={{opacity: mode==='api'?0.6:1, marginLeft:'0.7rem'}}>
+          360° API
+        </button>
         <a style={{marginLeft:'0.7rem'}} href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir en Google Maps vista 360">🗺 Google Maps</a>
       </div>
       {(mode==='pb' && tried.pb && !streetViewBlocked) && (
@@ -111,6 +119,9 @@ function Vista360Section() {
       )}
       {(mode==='sv' && tried.sv && !streetViewBlockedAlt) && (
         <p style={{textAlign:'center', fontSize:'.7rem', opacity:.6, marginTop:'-0.6rem'}}>Si aún no aparece 360, usa el enlace Google Maps o el mapa 2D.</p>
+      )}
+      {mode==='api' && (
+        <p style={{textAlign:'center', fontSize:'.7rem', opacity:.6, marginTop:'-0.6rem'}}>Vista API (requiere clave); si no carga vuelve al mapa.</p>
       )}
       <noscript>
         <p>Activa JavaScript para ver la vista 360. <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></p>
