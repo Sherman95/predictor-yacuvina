@@ -24,9 +24,10 @@ const MAP_LNG = -79.68927961;
 // Enlace Street View original proporcionado por el usuario (vista 360 exacta)
 const rawStreetViewLink = "https://www.google.com/maps/@-3.5728483,-79.6892796,3a,90y,337.15h,51.68t/data=!3m8!1e1!3m6!1sCIHM0ogKEICAgIC7kYKx_QE!2e10!3e11!6shttps:%2F%2Flh3.googleusercontent.com%2Fgpms-cs-s%2FAB8u6Hb2c2n7D_MmhmLjCDKXZ_RWIJ0CUXAM6ummSsDAp-YtBPfdweuhOumDFsehhuC3ubyY-CNgyRlg8_kTWbZ91HKJHEY3fLy68KbmmRNHy9gxP2arVWMHfBSTWyPeAzg_lymsvBk-kg%3Dw900-h600-k-no-pi38.322263135479254-ya337.15245327169305-ro0-fo100!7i4096!8i2048";
 // Iframe oficial de Street View usa el endpoint /maps/embed con un parámetro pb codificado.
-// Construimos pb manualmente a partir de: photoId, lat, lng, heading (y), pitch (t) y FOV fijo.
-// Nota: Si Google cambia el formato, se puede reemplazar por un pb nuevo copiado desde "Compartir > Insertar un mapa".
+// pb aquí es aproximado; si no muestra 360 correctamente se puede regenerar desde Google Maps > Compartir > Insertar.
 const streetViewEmbedUrl = "https://www.google.com/maps/embed?pb=!4v0!6m8!1m7!1sCIHM0ogKEICAgIC7kYKx_QE!2m2!1d-3.5728483!2d-79.6892796!3f337.15!4f51.68!5f0.7820865974627469";
+// Método alternativo usando el enlace original con output=svembed (a veces fuerza modo panorámico cuando el pb cae a 2D)
+const streetViewSvEmbedUrl = rawStreetViewLink + (rawStreetViewLink.includes('?') ? '&' : '?') + 'output=svembed';
 // Mapa fallback simple (por coordenadas)
 const mapsEmbedUrl = `https://www.google.com/maps?q=${MAP_LAT},${MAP_LNG}&z=16&output=embed`;
 const mapsExternalLink = rawStreetViewLink; // external link abre directamente la vista 360
@@ -37,28 +38,43 @@ const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
 // Componente embebido 360 (declaro antes de App para mantener orden)
 function Vista360Section() {
   const [streetViewBlocked, setStreetViewBlocked] = useState(false);
+  const [streetViewBlockedAlt, setStreetViewBlockedAlt] = useState(false);
   const [mapBlocked, setMapBlocked] = useState(false);
-  const [modo360, setModo360] = useState(false); // inicia en mapa para evitar pantalla negra inicial
-  const [streetTried, setStreetTried] = useState(false);
-  const showStreetView = modo360 && !streetViewBlocked;
-  const showMap = !modo360 && !mapBlocked;
+  // mode: 'pb' (Street View pb), 'sv' (Street View svembed), 'map'
+  const [mode, setMode] = useState('pb'); // arrancar directamente en 360 como solicitaste
+  const [tried, setTried] = useState({ pb:false, sv:false, map:false });
+  const showStreetPB = mode === 'pb' && !streetViewBlocked;
+  const showStreetSV = mode === 'sv' && !streetViewBlockedAlt;
+  const showMap = mode === 'map' && !mapBlocked;
   return (
     <section className="galeria-container vista360-container" aria-label="Vista 360° y mapa del columpio Tocando el Cielo">
       <h2>Vista 360° Tocando el Cielo</h2>
       <p className="vista360-descripcion">
-        Alterna entre mapa y panorámica. Algunas redes/navegadores bloquean Street View y muestran negro; por eso iniciamos en mapa.
+        Street View 360 activo. Si ves mapa 2D o negro, prueba "Método 2" o el mapa normal.
       </p>
       <div className="vista360-frame-wrapper">
-        {showStreetView && (
+        {showStreetPB && (
           <iframe
-            title="Street View 360 Columpio Tocando el Cielo"
+            title="Street View 360 (Método 1)"
             src={streetViewEmbedUrl}
             loading="lazy"
             allow="fullscreen"
             allowFullScreen
             referrerPolicy="no-referrer-when-downgrade"
-            onLoad={() => setStreetTried(true)}
-            onError={() => { setStreetViewBlocked(true); setStreetTried(true); setModo360(false); }}
+            onLoad={() => setTried(t => ({...t, pb:true}))}
+            onError={() => { setStreetViewBlocked(true); setTried(t => ({...t, pb:true})); setMode('sv'); }}
+          />
+        )}
+        {showStreetSV && (
+          <iframe
+            title="Street View 360 (Método 2)"
+            src={streetViewSvEmbedUrl}
+            loading="lazy"
+            allow="fullscreen"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            onLoad={() => setTried(t => ({...t, sv:true}))}
+            onError={() => { setStreetViewBlockedAlt(true); setTried(t => ({...t, sv:true})); setMode('map'); }}
           />
         )}
         {showMap && (
@@ -71,7 +87,7 @@ function Vista360Section() {
             onError={() => setMapBlocked(true)}
           />
         )}
-        {streetViewBlocked && mapBlocked && (
+        {(streetViewBlocked || streetViewBlockedAlt) && mapBlocked && (
           <div className="vista360-fallback" role="alert">
             <p>No se pudo cargar la vista 360 ni el mapa (posible restricción corporativa / navegador). Abre el enlace directo.</p>
             <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link alt">🗺 Abrir en Google Maps</a>
@@ -79,13 +95,22 @@ function Vista360Section() {
         )}
       </div>
       <div className="vista360-actions secundario">
-        <button type="button" className="vista360-link" onClick={() => setModo360(m => !m)}>
-          {modo360 ? '← Ver mapa' : 'Ver 360° (beta)'}
+        <button type="button" className="vista360-link" onClick={() => setMode('pb')} disabled={mode==='pb' || streetViewBlocked} style={{opacity: mode==='pb'?0.6:1}}>
+          360° Método 1
         </button>
-        <a style={{marginLeft:'1rem'}} href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir en Google Maps vista 360">🗺 Google Maps</a>
+        <button type="button" className="vista360-link" onClick={() => setMode('sv')} disabled={mode==='sv' || streetViewBlockedAlt} style={{opacity: mode==='sv'?0.6:1, marginLeft:'0.7rem'}}>
+          360° Método 2
+        </button>
+        <button type="button" className="vista360-link" onClick={() => setMode('map')} disabled={mode==='map'} style={{opacity: mode==='map'?0.6:1, marginLeft:'0.7rem'}}>
+          Mapa 2D
+        </button>
+        <a style={{marginLeft:'0.7rem'}} href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir en Google Maps vista 360">🗺 Google Maps</a>
       </div>
-      {modo360 && streetTried && !streetViewBlocked && (
-        <p style={{textAlign:'center', fontSize:'.7rem', opacity:.6, marginTop:'-0.6rem'}}>Si ves pantalla negra, tu navegador/bloqueadores impiden Street View. Vuelve al mapa.</p>
+      {(mode==='pb' && tried.pb && !streetViewBlocked) && (
+        <p style={{textAlign:'center', fontSize:'.7rem', opacity:.6, marginTop:'-0.6rem'}}>Si se ve plano o negro, pulsa Método 2.</p>
+      )}
+      {(mode==='sv' && tried.sv && !streetViewBlockedAlt) && (
+        <p style={{textAlign:'center', fontSize:'.7rem', opacity:.6, marginTop:'-0.6rem'}}>Si aún no aparece 360, usa el enlace Google Maps o el mapa 2D.</p>
       )}
       <noscript>
         <p>Activa JavaScript para ver la vista 360. <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></p>
