@@ -2200,6 +2200,14 @@ header h1 {
 .vista360-link:active { transform: translateY(0) scale(.97); }
 @media (max-width: 768px) { .vista360-descripcion { font-size:.85rem; } .vista360-link { padding:.85rem 1.3rem; font-size:.85rem; } }
 
+/* Iframe wrapper */
+.vista360-frame-wrapper { position:relative; width:100%; max-width:1100px; margin:0 auto 1.5rem; aspect-ratio: 16 / 9; border-radius: 24px; overflow:hidden; box-shadow:0 10px 40px -10px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08); background:rgba(0,0,0,.35); backdrop-filter:blur(10px); }
+.vista360-frame-wrapper iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+.vista360-fallback { padding:2rem 1.5rem; text-align:center; color:var(--text-secondary); display:flex; flex-direction:column; gap:1.2rem; justify-content:center; align-items:center; height:100%; }
+.vista360-link.alt { background:var(--gradient-accent); }
+.vista360-fallback p { max-width:540px; font-size:.9rem; }
+@media (max-width: 680px){ .vista360-frame-wrapper { aspect-ratio: 4 / 3; } }
+
 .actividades-container ul {
   list-style: none;
   padding: 0;

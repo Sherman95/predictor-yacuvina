@@ -18,11 +18,46 @@ import imagen1 from './assets/yacuvina1.jpg';
 import imagen2 from './assets/yacuvina2.jpg';
 import imagen3 from './assets/yacuvina3.jpg';
 import imagen4 from './assets/yacuvina4.png';
-// Enlace Google Earth 360° (Columpio "Tocando el Cielo")
-const vista360Url = "https://earth.app.goo.gl/?apn=com.google.earth&isi=293622097&ius=googleearth&link=https%3a%2f%2fearth.google.com%2fweb%2fsearch%2fTOCANDO%2bEL%2bCIELO%2b-%2bColumpio%2bExtremo%2bYacuvi%25c3%25b1a,%2bAyapamba%2f%40-3.57284828,-79.68927961,1807.44376846a,0d,60y,356.282083h,84.84078352t,0r%2fdata%3dCm4aQBI6CiUweDkwMzM1ZGI3MWZkZjg5OGI6MHg3YjE5NTA0ODMxMDRjODFjKhEtMy41NjExLCAtNzkuNzA1ORgBIAEiJgokCe5JmtsbNgzAEbK5hp0VYAzAGWTHUccK61PAIQmB4t7P7VPAQgIIASIbChdDSUhNMG9nS0VJQ0FnSUM3a1lLeF9RRRAFOgMKATBCAggASg0I____________ARAA";
+// URL web directa (decodificada) para intentar incrustar Google Earth (puede fallar por X-Frame-Options)
+// Si Earth bloquea el iframe, mostraremos fallback con enlace externo.
+const earthEmbedUrl = "https://earth.google.com/web/search/TOCANDO%20EL%20CIELO%20-%20Columpio%20Extremo%20Yacuvi%C3%B1a,%20Ayapamba/@-3.57284828,-79.68927961,1807.44376846a,0d,60y,356.282083h,84.84078352t,0r/data=Cm4aQBI6CiUweDkwMzM1ZGI3MWZkZjg5OGI6MHg3YjE5NTA0ODMxMDRjODFjKhEtMy41NjExLCAtNzkuNzA1ORgBIAEiJgokCe5JmtsbNgzAEbK5hp0VYAzAGWTHUccK61PAIQmB4t7P7VPAQgIIASIbChdDSUhNMG9nS0VJQ0FnSUM3a1lLeF9RRRAFOgMKATBCAggASg0I____________ARAA";
 // Fondo principal (ruta pública) para asegurar carga en iOS / producción
 import wallpaper from '/yacuvinaWallpaper.jpg';
 const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
+
+// Componente embebido 360 (declaro antes de App para mantener orden)
+function Vista360Section() {
+  const [blocked, setBlocked] = useState(false);
+  return (
+    <section className="galeria-container vista360-container" aria-label="Vista 360 grados del columpio Tocando el Cielo">
+      <h2>Vista 360° Tocando el Cielo</h2>
+      <p className="vista360-descripcion">
+        Explora el columpio extremo de Yacuviña en una vista inmersiva. Si no se carga, usa el botón de apertura externa.
+      </p>
+      <div className="vista360-frame-wrapper">
+        {!blocked && (
+          <iframe
+            title="Google Earth 360 Columpio"
+            src={earthEmbedUrl}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+            onError={() => setBlocked(true)}
+          />
+        )}
+        {(blocked) && (
+          <div className="vista360-fallback" role="alert">
+            <p>No se pudo incrustar Google Earth (bloqueo de origen). Ábrelo en una pestaña externa.</p>
+            <a href={earthEmbedUrl} target="_blank" rel="noopener noreferrer" className="vista360-link alt">🌐 Abrir en Google Earth</a>
+          </div>
+        )}
+      </div>
+      <noscript>
+        <p>Activa JavaScript para ver la vista 360. <a href={earthEmbedUrl} target="_blank" rel="noopener noreferrer">Abrir en Google Earth</a></p>
+      </noscript>
+    </section>
+  );
+}
 
 
 function App() {
@@ -194,24 +229,8 @@ function App() {
         />
       </section>
 
-      {/* Vista 360° – Columpio Tocando el Cielo */}
-      <section className="galeria-container vista360-container">
-        <h2>Vista 360° Tocando el Cielo</h2>
-        <p className="vista360-descripcion">
-          Explora el columpio extremo de Yacuviña en una vista inmersiva 360°. Abre el enlace en Google Earth (app o web) para experimentar la ubicación antes de tu visita.
-        </p>
-        <div className="vista360-actions">
-          <a
-            href={vista360Url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="vista360-link"
-            aria-label="Abrir vista 360 grados del columpio Tocando el Cielo en una nueva pestaña"
-          >
-            🌐 Abrir en Google Earth
-          </a>
-        </div>
-      </section>
+  {/* Vista 360° – Columpio Tocando el Cielo (iframe embebido con fallback) */}
+  <Vista360Section />
 
       {/* Aquí puedes seguir componentizando las secciones estáticas si quieres */}
       <section className="actividades-container">
