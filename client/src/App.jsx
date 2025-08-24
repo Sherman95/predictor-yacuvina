@@ -38,13 +38,15 @@ const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
 function Vista360Section() {
   const [streetViewBlocked, setStreetViewBlocked] = useState(false);
   const [mapBlocked, setMapBlocked] = useState(false);
-  const showStreetView = !streetViewBlocked;
-  const showMap = streetViewBlocked && !mapBlocked;
+  const [modo360, setModo360] = useState(false); // inicia en mapa para evitar pantalla negra inicial
+  const [streetTried, setStreetTried] = useState(false);
+  const showStreetView = modo360 && !streetViewBlocked;
+  const showMap = !modo360 && !mapBlocked;
   return (
     <section className="galeria-container vista360-container" aria-label="Vista 360° y mapa del columpio Tocando el Cielo">
       <h2>Vista 360° Tocando el Cielo</h2>
       <p className="vista360-descripcion">
-        Vista inmersiva: si Google bloquea el iframe verás el mapa estándar; si también falla usa el enlace externo.
+        Alterna entre mapa y panorámica. Algunas redes/navegadores bloquean Street View y muestran negro; por eso iniciamos en mapa.
       </p>
       <div className="vista360-frame-wrapper">
         {showStreetView && (
@@ -55,7 +57,8 @@ function Vista360Section() {
             allow="fullscreen"
             allowFullScreen
             referrerPolicy="no-referrer-when-downgrade"
-            onError={() => setStreetViewBlocked(true)}
+            onLoad={() => setStreetTried(true)}
+            onError={() => { setStreetViewBlocked(true); setStreetTried(true); setModo360(false); }}
           />
         )}
         {showMap && (
@@ -76,8 +79,14 @@ function Vista360Section() {
         )}
       </div>
       <div className="vista360-actions secundario">
-        <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir en Google Maps vista 360">🗺 Abrir en Google Maps</a>
+        <button type="button" className="vista360-link" onClick={() => setModo360(m => !m)}>
+          {modo360 ? '← Ver mapa' : 'Ver 360° (beta)'}
+        </button>
+        <a style={{marginLeft:'1rem'}} href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir en Google Maps vista 360">🗺 Google Maps</a>
       </div>
+      {modo360 && streetTried && !streetViewBlocked && (
+        <p style={{textAlign:'center', fontSize:'.7rem', opacity:.6, marginTop:'-0.6rem'}}>Si ves pantalla negra, tu navegador/bloqueadores impiden Street View. Vuelve al mapa.</p>
+      )}
       <noscript>
         <p>Activa JavaScript para ver la vista 360. <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></p>
       </noscript>
