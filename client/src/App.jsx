@@ -18,47 +18,65 @@ import imagen1 from './assets/yacuvina1.jpg';
 import imagen2 from './assets/yacuvina2.jpg';
 import imagen3 from './assets/yacuvina3.jpg';
 import imagen4 from './assets/yacuvina4.png';
-// Embed Google Maps (sin API key) usando query por coordenadas. Fallback: enlace externo provisto por el usuario.
+// Embed Google Maps / Street View (sin API key). Primero intentamos Street View 360° con el enlace proporcionado; si falla o está bloqueado usamos el mapa estándar.
 const MAP_LAT = -3.57284828;
 const MAP_LNG = -79.68927961;
+// Enlace Street View original proporcionado por el usuario (vista 360 exacta)
+const rawStreetViewLink = "https://www.google.com/maps/@-3.5728483,-79.6892796,3a,90y,337.15h,51.68t/data=!3m8!1e1!3m6!1sCIHM0ogKEICAgIC7kYKx_QE!2e10!3e11!6shttps:%2F%2Flh3.googleusercontent.com%2Fgpms-cs-s%2FAB8u6Hb2c2n7D_MmhmLjCDKXZ_RWIJ0CUXAM6ummSsDAp-YtBPfdweuhOumDFsehhuC3ubyY-CNgyRlg8_kTWbZ91HKJHEY3fLy68KbmmRNHy9gxP2arVWMHfBSTWyPeAzg_lymsvBk-kg%3Dw900-h600-k-no-pi38.322263135479254-ya337.15245327169305-ro0-fo100!7i4096!8i2048?entry=ttu";
+// Para embeber forzamos output=embed (funciona en la mayoría de vistas públicas de Maps / Street View)
+const streetViewEmbedUrl = rawStreetViewLink + (rawStreetViewLink.includes('?') ? '&' : '?') + 'output=embed';
+// Mapa fallback simple (por coordenadas)
 const mapsEmbedUrl = `https://www.google.com/maps?q=${MAP_LAT},${MAP_LNG}&z=16&output=embed`;
-const mapsExternalLink = "https://maps.app.goo.gl/7TXRa5jtK8AwVhB38";
+const mapsExternalLink = rawStreetViewLink; // external link abre directamente la vista 360
 // Fondo principal (ruta pública) para asegurar carga en iOS / producción
 import wallpaper from '/yacuvinaWallpaper.jpg';
 const imagenesYacuvina = [imagen1, imagen2, imagen3, imagen4];
 
 // Componente embebido 360 (declaro antes de App para mantener orden)
 function Vista360Section() {
-  const [blocked, setBlocked] = useState(false);
+  const [streetViewBlocked, setStreetViewBlocked] = useState(false);
+  const [mapBlocked, setMapBlocked] = useState(false);
+  const showStreetView = !streetViewBlocked;
+  const showMap = streetViewBlocked && !mapBlocked;
   return (
-    <section className="galeria-container vista360-container" aria-label="Mapa interactivo del columpio Tocando el Cielo">
-      <h2>Mapa Interactivo Tocando el Cielo</h2>
+    <section className="galeria-container vista360-container" aria-label="Vista 360° y mapa del columpio Tocando el Cielo">
+      <h2>Vista 360° Tocando el Cielo</h2>
       <p className="vista360-descripcion">
-        Ubicación exacta del columpio extremo de Yacuviña. Mueve y acerca el mapa. Si no carga el iframe, abre el mapa directamente en Google Maps.
+        Explora la panorámica 360°. Si no carga la vista inmersiva se mostrará el mapa. Como último recurso usa el enlace externo.
       </p>
       <div className="vista360-frame-wrapper">
-        {!blocked && (
+        {showStreetView && (
           <iframe
-            title="Google Maps Columpio Tocando el Cielo"
+            title="Street View 360 Columpio Tocando el Cielo"
+            src={streetViewEmbedUrl}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            onError={() => setStreetViewBlocked(true)}
+          />
+        )}
+        {showMap && (
+          <iframe
+            title="Mapa Columpio Tocando el Cielo"
             src={mapsEmbedUrl}
             loading="lazy"
             allowFullScreen
             referrerPolicy="no-referrer-when-downgrade"
-            onError={() => setBlocked(true)}
+            onError={() => setMapBlocked(true)}
           />
         )}
-        {blocked && (
+        {streetViewBlocked && mapBlocked && (
           <div className="vista360-fallback" role="alert">
-            <p>No se pudo cargar el mapa embebido (posible restricción de red). Usa el enlace externo.</p>
+            <p>No se pudo cargar la vista 360 ni el mapa (restricción de red). Abre el enlace directo.</p>
             <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link alt">🗺 Abrir en Google Maps</a>
           </div>
         )}
       </div>
       <div className="vista360-actions secundario">
-        <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir ubicación en Google Maps">🗺 Abrir en Google Maps</a>
+        <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer" className="vista360-link" aria-label="Abrir en Google Maps vista 360">🗺 Abrir en Google Maps</a>
       </div>
       <noscript>
-        <p>Activa JavaScript para ver el mapa. <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></p>
+        <p>Activa JavaScript para ver la vista 360. <a href={mapsExternalLink} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></p>
       </noscript>
     </section>
   );
