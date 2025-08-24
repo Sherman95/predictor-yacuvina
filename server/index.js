@@ -105,6 +105,32 @@ const geoCache = new Map();
 const GEO_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12h
 const GEO_PROVIDER = process.env.GEO_PROVIDER || 'ip-api'; // ip-api | ipapi | ipwhois
 
+// ==== LOG DETALLADO DE VISITAS ====
+// Guarda cada visita con hora. Las visitas anteriores al despliegue generan placeholders con hora=null.
+const MAX_VISIT_LOG = parseInt(process.env.MAX_VISIT_LOG || '20000');
+const VISIT_LOG_LAST = parseInt(process.env.VISIT_LOG_LAST || '100');
+const VISIT_LOG_PLACEHOLDER_CAP = parseInt(process.env.VISIT_LOG_PLACEHOLDER_CAP || '1000');
+let visitLog = []; // { time, hora, ruta, tipo }
+let legacyPlaceholders = 0; // cuántos placeholders se generaron para visitas previas
+
+function registrarVisitaDetallada({ ruta, tipo='api' }) {
+    try {
+        const now = new Date();
+        visitLog.push({
+            time: now.toISOString(),
+            hora: now.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+            ruta,
+            tipo
+        });
+        if (visitLog.length > MAX_VISIT_LOG) {
+            // recortar conservando las últimas
+            visitLog.splice(0, visitLog.length - MAX_VISIT_LOG);
+        }
+    } catch (e) {
+        // silencioso
+    }
+}
+
 function cargarDiaActualPersistido() {
     try {
         if (!fs.existsSync(CURRENT_PATH)) return;
@@ -117,6 +143,16 @@ function cargarDiaActualPersistido() {
             acumulado.total = snap.acumulado?.total || acumulado.total;
             acumulado.unicos = snap.acumulado?.unicos || acumulado.unicos;
             if (snap.acumulado?.claves) acumulado.claves = new Set(snap.acumulado.claves);
+            // Restaurar visitLog si existe; en caso contrario, generar placeholders (hora = null)
+            if (Array.isArray(snap.visitLog)) {
+                visitLog = snap.visitLog;
+                legacyPlaceholders = snap.legacyPlaceholders || 0;
+            } else {
+                const totalPrevias = visitas.total;
+                const toGen = Math.min(totalPrevias, VISIT_LOG_PLACEHOLDER_CAP);
+                visitLog = Array.from({ length: toGen }, () => ({ time: null, hora: null, ruta: null, tipo: 'legacy' }));
+                legacyPlaceholders = toGen;
+            }
             console.log('[STATS] Día restaurado desde visitas-current.json (incluye acumulado)');
         }
     } catch(e){ console.warn('[STATS] No se pudo restaurar día actual:', e.message); }
@@ -137,7 +173,9 @@ function persistirDiaActualDebounce() {
                 rutas: visitas.rutas,
                 beacon: { fecha: beacon.fecha, total: beacon.total, unicos: beacon.unicos, claves: [...beacon.claves] },
                 geo: { fecha: geo.fecha, porCiudad: geo.porCiudad, porPais: geo.porPais, uniqueCiudad: geo.uniqueCiudad, uniquePais: geo.uniquePais },
-                acumulado: { total: acumulado.total, unicos: acumulado.unicos, claves: [...acumulado.claves] }
+                acumulado: { total: acumulado.total, unicos: acumulado.unicos, claves: [...acumulado.claves] },
+                visitLog,
+                legacyPlaceholders
             };
             fs.writeFileSync(CURRENT_PATH, JSON.stringify(snap,null,2));
         } catch(e){ console.warn('[STATS] Persistencia falló:', e.message); }
@@ -198,6 +236,7 @@ function resetSiNuevoDia() {
                     guardarHistorico(historico);
                 }
                 visitas.fecha = hoy; visitas.total = 0; visitas.unicos = 0; visitas.claves = new Set(); visitas.rutas = {};
+                visitLog = []; legacyPlaceholders = 0;
                 try { if (fs.existsSync(CURRENT_PATH)) fs.unlinkSync(CURRENT_PATH); } catch{}
         }
         if (beacon.fecha !== hoy) { beacon.fecha = hoy; beacon.total = 0; beacon.unicos = 0; beacon.claves = new Set(); }
@@ -219,6 +258,7 @@ app.use((req, _res, next) => {
     if (!visitas.claves.has(clave)) { visitas.claves.add(clave); visitas.unicos += 1; nuevoUnico = true; }
     if (!acumulado.claves.has(clave)) { acumulado.claves.add(clave); acumulado.unicos += 1; }
         visitas.rutas[req.path] = (visitas.rutas[req.path] || 0) + 1;
+        registrarVisitaDetallada({ ruta: req.path, tipo: 'api' });
     if (nuevoUnico) { setImmediate(()=>procesarGeo(ip)); }
     persistirDiaActualDebounce();
     }
@@ -289,6 +329,8 @@ app.get('/api/_stats/visitas', requireAuth, (req, res) => {
         acumulado: { total: acumulado.total, unicos: acumulado.unicos },
         geoHoy,
         geoHistorico,
+        visitLogLast: visitLog.slice(-VISIT_LOG_LAST),
+        visitLogMeta: { total: visitLog.length, last: VISIT_LOG_LAST, placeholders: legacyPlaceholders },
         nota: 'POST /api/_stats/reset para reiniciar (protegido)'
     });
 });
@@ -313,7 +355,18 @@ app.post('/api/visit-beacon', async (req, res) => {
     // Buscar último city/country del cache para devolver
     const ipCanon = ipRaw === '::1' ? '127.0.0.1' : ipRaw;
     const cached = geoCache.get(ipCanon) || {};
+    registrarVisitaDetallada({ ruta: '/api/visit-beacon', tipo: 'site' });
     res.json({ ok: true, nuevo, fecha: beacon.fecha, city: cached.city || 'Desconocido', country: cached.country || 'Desconocido' });
+});
+// Log completo del día (protegido). Devuelve todas las visitas con hora o null (legacy)
+app.get('/api/_stats/visitas/log', requireAuth, (req, res) => {
+    res.json({
+        fecha: visitas.fecha,
+        totalRegistros: visitLog.length,
+        placeholders: legacyPlaceholders,
+        max: MAX_VISIT_LOG,
+        data: visitLog
+    });
 });
 // ===============================================================
 
